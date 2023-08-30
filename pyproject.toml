@@ -37,4 +37,4 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 # CLI declaration
-target-montapackingv2 = 'target_montapackingv2.target:TargetMontapackingv2.cli'
+target-dynamicsonprem = 'target_dynamics_onprem.target:TargetDynamicsOnprem.cli'
