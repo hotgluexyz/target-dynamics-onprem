@@ -21,6 +21,7 @@ class DynamicOnpremSink(HotglueSink):
     ) -> None:
         super().__init__(target, stream_name, schema, key_properties)
 
+        self.logger.info("Making request....")
         data = self.request_api("GET", "https://delph.d365experts.cloud:7048/BC160/ODataV4/Company?$format=json")
         self.logger.info(f"GET response => {data}")
 
