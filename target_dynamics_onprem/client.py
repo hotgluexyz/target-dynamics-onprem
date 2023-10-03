@@ -14,10 +14,10 @@ class DynamicOnpremSink(HotglueSink):
 
     def __init__(
         self,
-        target: PluginBase,
-        stream_name: str,
-        schema: Dict,
-        key_properties: Optional[List[str]],
+        target,
+        stream_name,
+        schema,
+        key_properties,
     ) -> None:
         super().__init__(target, stream_name, schema, key_properties)
 
