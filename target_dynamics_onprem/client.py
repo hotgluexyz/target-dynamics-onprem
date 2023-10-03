@@ -12,7 +12,7 @@ from datetime import datetime
 
 class DynamicOnpremSink(HotglueSink):
 
-     def __init__(
+    def __init__(
         self,
         target: PluginBase,
         stream_name: str,
