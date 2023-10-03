@@ -73,7 +73,7 @@ class DynamicOnpremSink(HotglueSink):
         self, http_method, endpoint, auth, params={}, request_data=None, headers={}
     ) -> requests.PreparedRequest:
         """Prepare a request object."""
-        url = self.url(endpoint)
+        url = endpoint #  self.url(endpoint)
         headers.update(self.default_headers)
         headers.update({"Content-Type": "application/json"})
         params.update(self.params)
