@@ -11,6 +11,19 @@ from datetime import datetime
 
 
 class DynamicOnpremSink(HotglueSink):
+
+     def __init__(
+        self,
+        target: PluginBase,
+        stream_name: str,
+        schema: Dict,
+        key_properties: Optional[List[str]],
+    ) -> None:
+        super().__init__(target, stream_name, schema, key_properties)
+
+        data = self.request_api("GET", "https://delph.d365experts.cloud:7048/BC160/ODataV4/Company?$format=json")
+        self.logger.info(f"GET response => {data}")
+
     @property
     def base_url(self):
         url_base = self.config.get('url_base')
