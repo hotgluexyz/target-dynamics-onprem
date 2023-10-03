@@ -90,7 +90,7 @@ class DynamicOnpremSink(HotglueSink):
             params=params,
             headers=headers,
             data=data,
-            auth=auth
+            auth=(self.config.get("username"), self.config.get("password"))
         )
         self.logger.info("response!!")
         self.logger.info(response.status_code)
