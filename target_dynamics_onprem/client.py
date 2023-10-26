@@ -80,10 +80,12 @@ class DynamicOnpremSink(HotglueSink):
             else None
         )
 
-        if self.config.get("basic_auth") == True:
-            auth = (self.config.get("username"), self.config.get("password"))
-        else:
-            auth = HttpNtlmAuth(self.config.get("username"), self.config.get("password"))
+        # if self.config.get("basic_auth") == True:
+        #     auth = (self.config.get("username"), self.config.get("password"))
+        # else:
+        #     auth = HttpNtlmAuth(self.config.get("username"), self.config.get("password"))
+        
+        auth = (self.config.get("username"), self.config.get("password"))
         
         get_url = f"https://delph.d365experts.cloud:7048/BC160/ODataV4/Company"
         self.logger.info("MAKING GET REQUEST OF COMPANIES")
