@@ -87,7 +87,7 @@ class DynamicOnpremSink(HotglueSink):
         
         auth = (self.config.get("username"), self.config.get("password"))
         
-        get_url = f"https://delph.d365experts.cloud:7048/BC160/ODataV4/Company"
+        get_url = f"https://delph.d365experts.cloud:7048/BC160/ODataV4/Company('ZZZ-WI2L')/purchaseDocuments?$format=json"
         self.logger.info("MAKING GET REQUEST OF COMPANIES")
 
         get_response = requests.request(
