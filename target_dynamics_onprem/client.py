@@ -21,10 +21,6 @@ class DynamicOnpremSink(HotglueSink):
     ) -> None:
         super().__init__(target, stream_name, schema, key_properties)
 
-        self.logger.info("Making request....")
-        data = self.request_api("GET", "https://delph.d365experts.cloud:7048/BC160/ODataV4/Company?$format=json")
-        self.logger.info(f"GET response => {data}")
-
     @property
     def base_url(self):
         url_base = self.config.get('url_base')
@@ -74,7 +70,7 @@ class DynamicOnpremSink(HotglueSink):
         self, http_method, endpoint, auth, params={}, request_data=None, headers={}
     ) -> requests.PreparedRequest:
         """Prepare a request object."""
-        url = endpoint #  self.url(endpoint)
+        url = self.url(endpoint)
         headers.update(self.default_headers)
         headers.update({"Content-Type": "application/json"})
         params.update(self.params)
@@ -83,7 +79,11 @@ class DynamicOnpremSink(HotglueSink):
             if request_data
             else None
         )
-        auth = HttpNtlmAuth(self.config.get("username"), self.config.get("password"))
+
+        if self.config.get("basic_auth") == True:
+            auth = (self.config.get("username"), self.config.get("password"))
+        else:
+            auth = HttpNtlmAuth(self.config.get("username"), self.config.get("password"))
 
         response = requests.request(
             method=http_method,
@@ -91,7 +91,7 @@ class DynamicOnpremSink(HotglueSink):
             params=params,
             headers=headers,
             data=data,
-            auth=(self.config.get("username"), self.config.get("password"))
+            auth=auth
         )
         self.logger.info("response!!")
         self.logger.info(response.status_code)
