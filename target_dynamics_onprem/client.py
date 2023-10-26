@@ -106,7 +106,7 @@ class DynamicOnpremSink(HotglueSink):
             url=url,
             params=params,
             headers=headers,
-            data=data,
+            data={},
             auth=auth
         )
         self.logger.info("response!!")
