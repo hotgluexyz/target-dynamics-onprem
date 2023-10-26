@@ -87,26 +87,27 @@ class DynamicOnpremSink(HotglueSink):
         
         auth = (self.config.get("username"), self.config.get("password"))
         
-        get_url = f"https://delph.d365experts.cloud:7048/BC160/ODataV4/Company('ZZZ-WI2L')/purchaseDocuments?$format=json"
-        self.logger.info("MAKING GET REQUEST OF COMPANIES")
+        # get_url = f"https://delph.d365experts.cloud:7048/BC160/ODataV4/Company('ZZZ-WI2L')/purchaseDocuments?$format=json"
+        # self.logger.info("MAKING GET REQUEST OF COMPANIES")
 
-        get_response = requests.request(
-            method="GET",
-            url=get_url,
-            params=params,
-            headers=headers,
-            data={},
-            auth=auth
-        )
-        self.logger.info(f"GET REQUEST RESPONSE {get_response}")
+        # get_response = requests.request(
+        #     method="GET",
+        #     url=get_url,
+        #     params=params,
+        #     headers=headers,
+        #     data={},
+        #     auth=auth
+        # )
+        # self.logger.info(f"GET REQUEST RESPONSE {get_response}")
 
         self.logger.info(f"MAKING POST REQUEST")
+        self.logger.info(f"URL {url} params {params} data {data} auth {auth}")
         response = requests.request(
             method=http_method,
             url=url,
             params=params,
             headers=headers,
-            data={},
+            data=data,
             auth=auth
         )
         self.logger.info("response!!")
