@@ -8,7 +8,7 @@ class Vendors(DynamicOnpremSink):
     """Dynamics-onprem target sink class."""
 
     endpoint = "/workflowVendors?$format=json"
-    name = "Vendors"
+    available_names = ["Vendors"]
 
     def preprocess_record(self, record: dict, context: dict) -> None:
 
@@ -51,7 +51,7 @@ class Items(DynamicOnpremSink):
     """Dynamics-onprem target sink class."""
 
     endpoint = "/workflowItems?$format=json"
-    name = "Items"
+    available_names = ["Items"]
 
     def preprocess_record(self, record: dict, context: dict) -> None:
         mapping = {
@@ -87,7 +87,7 @@ class PurchaseOrder(DynamicOnpremSink):
     """Dynamics-onprem target sink class."""
 
     endpoint = "/purchaseDocuments?$format=json"
-    name = "PurchaseOrders"
+    available_names = ["PurchaseOrders", "Bills"]
 
     def preprocess_record(self, record: dict, context: dict) -> None:
         dueDate = None

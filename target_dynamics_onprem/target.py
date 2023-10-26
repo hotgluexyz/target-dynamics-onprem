@@ -7,6 +7,8 @@ from target_dynamics_onprem.sinks import (
     Items,
     PurchaseOrder
 )
+from singer_sdk.sinks import Sink
+from typing import Type
 
 
 class TargetDynamicsOnprem(TargetHotglue):
@@ -36,6 +38,12 @@ class TargetDynamicsOnprem(TargetHotglue):
             th.StringType,
         ),
     ).to_dict()
+
+    def get_sink_class(self, stream_name: str) -> Type[Sink]:
+        for sink_class in self.SINK_TYPES:
+            # Search for streams with multiple names
+            if stream_name in sink_class.available_names:
+                return sink_class
 
 
 if __name__ == "__main__":
