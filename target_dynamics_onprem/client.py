@@ -26,7 +26,7 @@ class DynamicOnpremSink(HotglueSink):
         url_base = self.config.get('url_base')
         tenant = self.config.get('tenant')
         company_id = self.config.get('company_id')
-        base_url = f"http://{url_base}/{tenant}/ODataV4/Company('{company_id}')"
+        base_url = f"https://{url_base}/{tenant}/ODataV4/Company('{company_id}')"
         self.logger.info(f"BASE URL: {base_url}")
         return base_url
 
