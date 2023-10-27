@@ -104,7 +104,7 @@ class PurchaseOrder(DynamicOnpremSink):
             "dueDate": dueDate,
             "locationCode": record.get("locationId"),
             "amount": record.get("totalAmount"),
-            "documentType": "Order"
+            "documentType": "Invoice"
         }
         lines = []
         for line in record.get("lineItems"):
