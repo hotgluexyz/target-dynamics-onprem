@@ -12,7 +12,7 @@ class Vendors(DynamicOnpremSink):
     name = "Vendors"
 
     def preprocess_record(self, record: dict, context: dict) -> None:
-
+        self.endpoint = self.get_endpoint(record)
         phoneNumbers = record.get("phoneNumber")
         address = record.get("addresses")
         mapping = {
@@ -38,14 +38,11 @@ class Vendors(DynamicOnpremSink):
     def upsert_record(self, record: dict, context: dict):
         state_updates = dict()
         if record:
-            try:
-                vendor = self.request_api(
-                    "POST", endpoint=self.endpoint, request_data=record
-                )
-                vendor_id = vendor.json()["No"]
-                self.logger.info(f"BuyOrder created succesfully with Id {vendor_id}")
-            except:
-                raise KeyError
+            vendor = self.request_api(
+                "POST", endpoint=self.endpoint, request_data=record
+            )
+            vendor_id = vendor.json()["No"]
+            self.logger.info(f"BuyOrder created succesfully with Id {vendor_id}")
             return vendor_id, True, state_updates
         
 class Items(DynamicOnpremSink):
@@ -56,6 +53,7 @@ class Items(DynamicOnpremSink):
     name = "Items"
 
     def preprocess_record(self, record: dict, context: dict) -> None:
+        self.endpoint = self.get_endpoint(record)
         mapping = {
             "description": record.get("name"),
             "type": record.get("type"),
@@ -75,27 +73,28 @@ class Items(DynamicOnpremSink):
     def upsert_record(self, record: dict, context: dict):
         state_updates = dict()
         if record:
-            try:
-                item = self.request_api(
-                    "POST", endpoint=self.endpoint, request_data=record
-                )
-                item_id = item.json()["No"]
-                self.logger.info(f"Item created succesfully with Id {item_id}")
-            except:
-                raise KeyError
+            item = self.request_api(
+                "POST", endpoint=self.endpoint, request_data=record
+            )
+            item_id = item.json()["No"]
+            self.logger.info(f"Item created succesfully with Id {item_id}")
             return item_id, True, state_updates
         
 class PurchaseOrder(DynamicOnpremSink):
     """Dynamics-onprem target sink class."""
 
     endpoint = "/purchaseDocuments?$format=json"
-    name = "PurchaseOrders/Bills"
+    @property
+    def name(self):
+        return self.stream_name
     available_names = ["PurchaseOrders", "Bills"]
 
     def preprocess_record(self, record: dict, context: dict) -> None:
+        self.endpoint = self.get_endpoint(record)
         dueDate = None
         if record.get("dueDate"):
             dueDate = self.convert_date(record.get("dueDate"))
+        documentType = "Order" if self.stream_name == "PurchaseOrders" else "Invoice"
         purchase_order_map = {
             "buyFromVendorNumber": record.get("vendorId"),
             "payToVendorNumber": record.get("vendorId"),
@@ -103,8 +102,8 @@ class PurchaseOrder(DynamicOnpremSink):
             "currencyCode": record.get("currency"),
             "dueDate": dueDate,
             "locationCode": record.get("locationId"),
-            "amount": record.get("totalAmount"),
-            "documentType": "Invoice"
+            "documentType": documentType,
+            "balAccountType": record.get("accountName"),
         }
         lines = []
         for line in record.get("lineItems"):
@@ -117,7 +116,9 @@ class PurchaseOrder(DynamicOnpremSink):
                 "jobLineDiscountAmount": line.get("discount"),
                 "taxGroupCode": line.get("taxCode"),
                 "description": line.get("productName"),
-                "orderDate": serviceDate
+                "number": line.get("productId"),
+                "orderDate": serviceDate,
+                "type": "Item"
             }
             lines.append(line_map)
 
@@ -131,20 +132,18 @@ class PurchaseOrder(DynamicOnpremSink):
     def upsert_record(self, record: dict, context: dict):
         state_updates = dict()
         if record:
-            try:
-                purchase_order = self.request_api(
-                    "POST", endpoint=self.endpoint, request_data=record.get("purchase_order")
-                )
-                purchase_order = purchase_order.json()
-                if purchase_order:
-                    for line in record.get("lines"):
-                        line["documentType"] = purchase_order.get("documentType")
-                        line["documentNumber"] = purchase_order.get("number")
-                        purchase_order_lines = self.request_api(
-                            "POST", endpoint="/purchaseDocumentLines?$format=json", request_data=line
-                        )
-                purchase_order_id = purchase_order["number"]
-                self.logger.info(f"purchase_order created succesfully with Id {purchase_order_id}")
-            except:
-                raise KeyError
+            purchase_order = self.request_api(
+                "POST", endpoint=self.endpoint, request_data=record.get("purchase_order")
+            )
+            purchase_order = purchase_order.json()
+            if purchase_order:
+                pol_endpoint = self.endpoint.split("/")[0] + "/purchaseDocumentLines?$format=json"
+                for line in record.get("lines"):
+                    line["documentType"] = purchase_order.get("documentType")
+                    line["documentNumber"] = purchase_order.get("number")
+                    purchase_order_lines = self.request_api(
+                        "POST", endpoint=pol_endpoint, request_data=line
+                    )
+            purchase_order_id = purchase_order["number"]
+            self.logger.info(f"purchase_order created succesfully with Id {purchase_order_id}")
             return purchase_order_id, True, state_updates

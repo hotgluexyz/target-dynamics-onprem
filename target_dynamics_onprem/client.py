@@ -23,10 +23,7 @@ class DynamicOnpremSink(HotglueSink):
 
     @property
     def base_url(self):
-        url_base = self.config.get('url_base')
-        tenant = self.config.get('tenant')
-        company_id = self.config.get('company_id')
-        base_url = f"https://{url_base}/{tenant}/ODataV4/Company('{company_id}')"
+        base_url = f"{self.config.get('url_base')}/Company"
         self.logger.info(f"BASE URL: {base_url}")
         return base_url
 
@@ -60,6 +57,11 @@ class DynamicOnpremSink(HotglueSink):
         resp = self._request(http_method, endpoint, params, headers, request_data=request_data)
         return resp
     
+    def get_endpoint(self, record):
+        #use subsidiary as company if passed, else use company from config
+        company_id = record.get("subsidiary") or self.config.get("company_id")
+        return f"('{company_id}')" + self.endpoint
+    
     @backoff.on_exception(
         backoff.expo,
         (RetriableAPIError, requests.exceptions.ReadTimeout),
@@ -80,25 +82,10 @@ class DynamicOnpremSink(HotglueSink):
             else None
         )
 
-        # if self.config.get("basic_auth") == True:
-        #     auth = (self.config.get("username"), self.config.get("password"))
-        # else:
-        #     auth = HttpNtlmAuth(self.config.get("username"), self.config.get("password"))
-        
-        auth = (self.config.get("username"), self.config.get("password"))
-        
-        # get_url = f"https://delph.d365experts.cloud:7048/BC160/ODataV4/Company('ZZZ-WI2L')/purchaseDocuments?$format=json"
-        # self.logger.info("MAKING GET REQUEST OF COMPANIES")
-
-        # get_response = requests.request(
-        #     method="GET",
-        #     url=get_url,
-        #     params=params,
-        #     headers=headers,
-        #     data={},
-        #     auth=auth
-        # )
-        # self.logger.info(f"GET REQUEST RESPONSE {get_response}")
+        if self.config.get("basic_auth") == True:
+            auth = (self.config.get("username"), self.config.get("password"))
+        else:
+            auth = HttpNtlmAuth(self.config.get("username"), self.config.get("password"))        
 
         self.logger.info(f"MAKING POST REQUEST")
         self.logger.info(f"URL {url} params {params} data {data} auth {auth}")
