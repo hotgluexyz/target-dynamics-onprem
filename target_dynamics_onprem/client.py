@@ -100,5 +100,5 @@ class DynamicOnpremSink(HotglueSink):
         self.logger.info("response!!")
         self.logger.info(response.status_code)
         self.logger.info(response.text)
-        # self.validate_response(response)
+        self.validate_response(response)
         return response

@@ -136,7 +136,7 @@ class PurchaseOrder(DynamicOnpremSink):
                 "POST", endpoint=self.endpoint, request_data=record.get("purchase_order")
             )
             purchase_order = purchase_order.json()
-            if purchase_order:
+            if purchase_order and purchase_order.get("number"):
                 pol_endpoint = self.endpoint.split("/")[0] + "/purchaseDocumentLines?$format=json"
                 for line in record.get("lines"):
                     line["documentType"] = purchase_order.get("documentType")
