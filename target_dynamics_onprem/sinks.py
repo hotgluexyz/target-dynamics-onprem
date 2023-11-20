@@ -169,10 +169,11 @@ class PurchaseInvoice(DynamicOnpremSink):
         }
         lines = []
         for line in record.get("lineItems"):
+            type = "G/L Account" if line.get("accountNumber") else "Item" if line.get("productNumber") else None
             line_map = {
                 "Line_Amount": line.get("totalPrice"),
                 "Description": line.get("description"),
-                "Type": line.get("accountName"),
+                "Type": type,
                 "No": str(line.get("accountNumber"))
             }
 
