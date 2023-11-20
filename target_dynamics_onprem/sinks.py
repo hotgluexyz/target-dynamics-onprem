@@ -164,6 +164,7 @@ class PurchaseInvoice(DynamicOnpremSink):
             dueDate = self.convert_date(record.get("dueDate"))
         purchase_order_map = {
             "Buy_from_Vendor_Name": record.get("vendorName"),
+            "Buy_from_Vendor_No": record.get("vendorId"),
             "Due_Date": dueDate,
             "Document_Type": "Invoice"
         }
@@ -174,7 +175,8 @@ class PurchaseInvoice(DynamicOnpremSink):
                 "Line_Amount": line.get("totalPrice"),
                 "Description": line.get("description"),
                 "Type": type,
-                "No": str(line.get("accountNumber"))
+                "No": str(line.get("accountNumber")),
+                "VAT_Bus_Posting_Group": line.get("taxCode", "")
             }
 
             custom_fields = line.get("customFields")
