@@ -195,10 +195,9 @@ class PurchaseInvoice(DynamicOnpremSink):
             purchase_order = self.request_api(
                 "POST", endpoint=self.endpoint, request_data=record.get("purchase_invoice")
             )
-            self.logger.info("Purchase invoice request succesful")
             purchase_order = purchase_order.json()
             purchase_order_no = purchase_order.get("No")
-            if purchase_order and purchase_order.get("number"):
+            if purchase_order and purchase_order_no:
                 pol_endpoint = self.endpoint.split("/")[0] + "/Purchase_InvoicePurchLines?$format=json"
                 self.logger.info("Posting purchase invoice lines")
                 for line in record.get("lines"):
