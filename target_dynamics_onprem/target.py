@@ -5,7 +5,8 @@ from singer_sdk import typing as th
 from target_dynamics_onprem.sinks import (
     Vendors,
     Items,
-    PurchaseOrder
+    PurchaseOrder,
+    PurchaseInvoice
 )
 from singer_sdk.sinks import Sink
 from typing import Type
@@ -14,7 +15,7 @@ from typing import Type
 class TargetDynamicsOnprem(TargetHotglue):
     """Sample target for Dynamics-onprem."""
     name = "target-dynamics-onprem"
-    SINK_TYPES = [Vendors, Items, PurchaseOrder]
+    SINK_TYPES = [Vendors, Items, PurchaseOrder, PurchaseInvoice]
     MAX_PARALLELISM = 10
     config_jsonschema = th.PropertiesList(
         th.Property(
