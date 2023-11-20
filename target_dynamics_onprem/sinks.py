@@ -165,6 +165,7 @@ class PurchaseInvoice(DynamicOnpremSink):
         purchase_order_map = {
             "Buy_from_Vendor_Name": record.get("vendorName"), #check if vendor no is being sent
             "Due_Date": dueDate,
+            "Document_Type": "Invoice"
         }
         lines = []
         for line in record.get("lineItems"):
@@ -194,15 +195,17 @@ class PurchaseInvoice(DynamicOnpremSink):
             purchase_order = self.request_api(
                 "POST", endpoint=self.endpoint, request_data=record.get("purchase_invoice")
             )
+            self.logger.info("Purchase invoice request succesful")
             purchase_order = purchase_order.json()
+            purchase_order_no = purchase_order.get("No")
             if purchase_order and purchase_order.get("number"):
                 pol_endpoint = self.endpoint.split("/")[0] + "/Purchase_InvoicePurchLines?$format=json"
+                self.logger.info("Posting purchase invoice lines")
                 for line in record.get("lines"):
-                    line["Document_Type"] = purchase_order.get("Document_Type")
-                    line["Document_No"] = purchase_order.get("No")
+                    line["Document_Type"] = "Invoice"
+                    line["Document_No"] = purchase_order_no
                     purchase_order_lines = self.request_api(
                         "POST", endpoint=pol_endpoint, request_data=line
                     )
-            purchase_order_id = purchase_order["No"]
-            self.logger.info(f"purchase_invoice created succesfully with Id {purchase_order_id}")
-            return purchase_order_id, True, state_updates
+            self.logger.info(f"purchase_invoice created succesfully with No {purchase_order_no}")
+            return purchase_order_no, True, state_updates
