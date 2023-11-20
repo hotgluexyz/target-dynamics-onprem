@@ -163,7 +163,7 @@ class PurchaseInvoice(DynamicOnpremSink):
         if record.get("dueDate"):
             dueDate = self.convert_date(record.get("dueDate"))
         purchase_order_map = {
-            "Buy_from_Vendor_Name": record.get("vendorName"), #check if vendor no is being sent
+            "Buy_from_Vendor_Name": record.get("vendorName"),
             "Due_Date": dueDate,
             "Document_Type": "Invoice"
         }
