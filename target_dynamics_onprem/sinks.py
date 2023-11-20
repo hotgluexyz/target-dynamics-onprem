@@ -173,7 +173,7 @@ class PurchaseInvoice(DynamicOnpremSink):
                 "Line_Amount": line.get("totalPrice"),
                 "Description": line.get("description"),
                 "Type": line.get("accountName"),
-                "No": line.get("accountNumber")
+                "No": str(line.get("accountNumber"))
             }
 
             custom_fields = line.get("customFields")
