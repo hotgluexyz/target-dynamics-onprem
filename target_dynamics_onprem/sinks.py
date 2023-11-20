@@ -147,3 +147,62 @@ class PurchaseOrder(DynamicOnpremSink):
             purchase_order_id = purchase_order["number"]
             self.logger.info(f"purchase_order created succesfully with Id {purchase_order_id}")
             return purchase_order_id, True, state_updates
+
+class PurchaseInvoice(DynamicOnpremSink):
+    """Dynamics-onprem target sink class."""
+
+    endpoint = "/Purchase_Invoice?$format=json"
+    @property
+    def name(self):
+        return self.stream_name
+    available_names = ["PurchaseInvoices"]
+
+    def preprocess_record(self, record: dict, context: dict) -> None:
+        self.endpoint = self.get_endpoint(record)
+        dueDate = None
+        if record.get("dueDate"):
+            dueDate = self.convert_date(record.get("dueDate"))
+        purchase_order_map = {
+            "Buy_from_Vendor_Name": record.get("vendorName"), #check if vendor no is being sent
+            "Due_Date": dueDate,
+        }
+        lines = []
+        for line in record.get("lineItems"):
+            line_map = {
+                "Line_Amount": line.get("totalPrice"),
+                "Description": line.get("description"),
+                "Type": line.get("accountName"),
+                "No": line.get("accountNumber")
+            }
+
+            custom_fields = line.get("customFields")
+            if custom_fields:
+                [line_map.update({cf.get("name"): cf.get("value")}) for cf in custom_fields]
+
+            lines.append(line_map)
+
+        payload = {
+            "purchase_invoice" : purchase_order_map,
+            "lines": lines
+        }
+        mapping = self.clean_convert(payload)
+        return mapping
+
+    def upsert_record(self, record: dict, context: dict):
+        state_updates = dict()
+        if record:
+            purchase_order = self.request_api(
+                "POST", endpoint=self.endpoint, request_data=record.get("purchase_invoice")
+            )
+            purchase_order = purchase_order.json()
+            if purchase_order and purchase_order.get("number"):
+                pol_endpoint = self.endpoint.split("/")[0] + "/Purchase_InvoicePurchLines?$format=json"
+                for line in record.get("lines"):
+                    line["Document_Type"] = purchase_order.get("Document_Type")
+                    line["Document_No"] = purchase_order.get("No")
+                    purchase_order_lines = self.request_api(
+                        "POST", endpoint=pol_endpoint, request_data=line
+                    )
+            purchase_order_id = purchase_order["No"]
+            self.logger.info(f"purchase_invoice created succesfully with Id {purchase_order_id}")
+            return purchase_order_id, True, state_updates
