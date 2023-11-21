@@ -172,10 +172,12 @@ class PurchaseInvoice(DynamicOnpremSink):
         for line in record.get("lineItems"):
             type = "G/L Account" if line.get("accountNumber") else "Item" if line.get("productNumber") else None
             line_map = {
-                "Total_Amount_Excl_VAT": line.get("totalPrice"),
+                "Line_Amount": line.get("totalPrice"),
                 "Description": line.get("description"),
                 "Type": type,
-                "No": str(line.get("accountNumber"))
+                "No": str(line.get("accountNumber")),
+                "VAT_Bus_Posting_Group": "EU",
+                "VAT_Prod_Posting_Group": "VAT20"
             }
 
             custom_fields = line.get("customFields")
@@ -190,12 +192,6 @@ class PurchaseInvoice(DynamicOnpremSink):
         }
         mapping = self.clean_convert(payload)
 
-        #get user cards 
-        self.logger.info("Fetching user cards")
-        cards_endpoint = self.endpoint.split("/")[0] + "/VATPostingSetup?$format=json"
-        user_card_groups = self.request_api(
-            "GET", endpoint=cards_endpoint
-        )
         return mapping
 
     def upsert_record(self, record: dict, context: dict):
