@@ -189,6 +189,12 @@ class PurchaseInvoice(DynamicOnpremSink):
             "lines": lines
         }
         mapping = self.clean_convert(payload)
+
+        #get user cards 
+        cards_endpoint = self.endpoint.split("/")[0] + "/User_CardUserGroups?$format=json"
+        user_card_groups = self.request_api(
+            "GET", endpoint=self.endpoint
+        )
         return mapping
 
     def upsert_record(self, record: dict, context: dict):
