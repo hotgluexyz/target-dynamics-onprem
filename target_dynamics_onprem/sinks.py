@@ -192,7 +192,7 @@ class PurchaseInvoice(DynamicOnpremSink):
 
         #get user cards 
         self.logger.info("Fetching user cards")
-        cards_endpoint = self.endpoint.split("/")[0] + "/User_CardUserGroups?$format=json"
+        cards_endpoint = self.endpoint.split("/")[0] + "/VATPostingSetup?$format=json"
         user_card_groups = self.request_api(
             "GET", endpoint=cards_endpoint
         )
