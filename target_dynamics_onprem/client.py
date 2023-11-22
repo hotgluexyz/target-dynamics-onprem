@@ -8,6 +8,7 @@ import json
 from singer_sdk.exceptions import RetriableAPIError
 from target_hotglue.common import HGJSONEncoder
 from datetime import datetime
+import ast
 
 
 class DynamicOnpremSink(HotglueSink):
@@ -102,3 +103,13 @@ class DynamicOnpremSink(HotglueSink):
         self.logger.info(response.text)
         self.validate_response(response)
         return response
+
+    def parse_objs(self, obj):
+        try:
+            try:
+                return ast.literal_eval(obj)
+            except:
+                return json.loads(obj)
+        except:
+            return obj
+    

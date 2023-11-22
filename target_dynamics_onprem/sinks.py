@@ -87,7 +87,7 @@ class PurchaseOrder(DynamicOnpremSink):
     @property
     def name(self):
         return self.stream_name
-    available_names = ["PurchaseOrders", "Bills"]
+    available_names = ["PurchaseOrders"]
 
     def preprocess_record(self, record: dict, context: dict) -> None:
         self.endpoint = self.get_endpoint(record)
@@ -155,7 +155,7 @@ class PurchaseInvoice(DynamicOnpremSink):
     @property
     def name(self):
         return self.stream_name
-    available_names = ["PurchaseInvoices"]
+    available_names = ["PurchaseInvoices", "Bills"]
 
     def preprocess_record(self, record: dict, context: dict) -> None:
         self.endpoint = self.get_endpoint(record)
@@ -169,7 +169,10 @@ class PurchaseInvoice(DynamicOnpremSink):
             "Document_Type": "Invoice"
         }
         lines = []
-        for line in record.get("lineItems"):
+        pi_lines = record.get("lineItems")
+        if isinstance(pi_lines, str):
+            pi_lines = self.parse_objs(pi_lines)
+        for line in pi_lines:
             type = "G/L Account" if line.get("accountNumber") else "Item" if line.get("productNumber") else None
             line_map = {
                 "Line_Amount": line.get("totalPrice"),
