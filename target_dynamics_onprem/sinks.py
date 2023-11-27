@@ -168,6 +168,12 @@ class PurchaseInvoice(DynamicOnpremSink):
             "Due_Date": dueDate,
             "Document_Type": "Invoice"
         }
+        # map purchase order custom fields
+        po_custom_fields = record.get("customFields")
+        if po_custom_fields:
+            [purchase_order_map.update({cf.get("name"): cf.get("value")}) for cf in po_custom_fields]
+        
+        # map lines
         lines = []
         pi_lines = record.get("lineItems")
         if isinstance(pi_lines, str):
