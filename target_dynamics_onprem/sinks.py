@@ -162,10 +162,16 @@ class PurchaseInvoice(DynamicOnpremSink):
         dueDate = None
         if record.get("dueDate"):
             dueDate = self.convert_date(record.get("dueDate"))
+        
+        issueDate = None
+        if record.get("issueDate"):
+            issueDate = self.convert_date(record.get("issueDate"))
+
         purchase_order_map = {
             "Buy_from_Vendor_Name": record.get("vendorName"),
             "Buy_from_Vendor_No": record.get("vendorId"),
             "Due_Date": dueDate,
+            "Invoice_Receipt_Date": issueDate,
             "Document_Type": "Invoice"
         }
         # map purchase order custom fields
