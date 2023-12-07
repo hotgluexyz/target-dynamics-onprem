@@ -106,6 +106,9 @@ class PurchaseDocuments(DynamicOnpremSink):
             "documentType": documentType,
             "balAccountType": record.get("accountName"),
         }
+        po_custom_fields = record.get("customFields")
+        if po_custom_fields:
+            [purchase_order_map.update({cf.get("name"): cf.get("value")}) for cf in po_custom_fields]
         lines = []
         for line in record.get("lineItems"):
             serviceDate = None
@@ -121,6 +124,9 @@ class PurchaseDocuments(DynamicOnpremSink):
                 "orderDate": serviceDate,
                 "type": "Item"
             }
+            custom_fields = line.get("customFields")
+            if custom_fields:
+                [line_map.update({cf.get("name"): cf.get("value")}) for cf in custom_fields]
             lines.append(line_map)
 
         payload = {
