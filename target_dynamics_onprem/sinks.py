@@ -80,14 +80,15 @@ class Items(DynamicOnpremSink):
             self.logger.info(f"Item created succesfully with Id {item_id}")
             return item_id, True, state_updates
         
-class PurchaseOrder(DynamicOnpremSink):
+class PurchaseDocuments(DynamicOnpremSink):
     """Dynamics-onprem target sink class."""
 
     endpoint = "/purchaseDocuments?$format=json"
     @property
     def name(self):
         return self.stream_name
-    available_names = ["PurchaseOrders"]
+    available_names = ["PurchaseOrders", "Bills"]
+    bills_default = True
 
     def preprocess_record(self, record: dict, context: dict) -> None:
         self.endpoint = self.get_endpoint(record)
@@ -156,6 +157,7 @@ class PurchaseInvoice(DynamicOnpremSink):
     def name(self):
         return self.stream_name
     available_names = ["PurchaseInvoices", "Bills"]
+    bills_default = False
 
     def preprocess_record(self, record: dict, context: dict) -> None:
         self.endpoint = self.get_endpoint(record)
