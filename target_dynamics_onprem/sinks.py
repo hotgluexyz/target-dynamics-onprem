@@ -110,7 +110,7 @@ class PurchaseDocuments(DynamicOnpremSink):
         if po_custom_fields:
             [purchase_order_map.update({cf.get("name"): cf.get("value")}) for cf in po_custom_fields]
         lines = []
-        for line in record.get("lineItems"):
+        for line in record.get("lineItems", []):
             serviceDate = None
             if line.get("serviceDate"):
                 serviceDate = self.convert_date(line.get("serviceDate"))
@@ -134,20 +134,18 @@ class PurchaseDocuments(DynamicOnpremSink):
             "lines": lines
         }
         mapping = self.clean_convert(payload)
-        self.logger.info(f"purchase documents payload {mapping}")
         return mapping
 
     def upsert_record(self, record: dict, context: dict):
         state_updates = dict()
         if record:
-            self.logger.info("making request")
             purchase_order = self.request_api(
                 "POST", endpoint=self.endpoint, request_data=record.get("purchase_order")
             )
             purchase_order = purchase_order.json()
             if purchase_order and purchase_order.get("number"):
                 pol_endpoint = self.endpoint.split("/")[0] + "/purchaseDocumentLines?$format=json"
-                for line in record.get("lines"):
+                for line in record.get("lines", []):
                     line["documentType"] = purchase_order.get("documentType")
                     line["documentNumber"] = purchase_order.get("number")
                     purchase_order_lines = self.request_api(
