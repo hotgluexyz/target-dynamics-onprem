@@ -134,11 +134,13 @@ class PurchaseDocuments(DynamicOnpremSink):
             "lines": lines
         }
         mapping = self.clean_convert(payload)
+        self.logger.info(f"purchase documents payload {mapping}")
         return mapping
 
     def upsert_record(self, record: dict, context: dict):
         state_updates = dict()
         if record:
+            self.logger.info("making request")
             purchase_order = self.request_api(
                 "POST", endpoint=self.endpoint, request_data=record.get("purchase_order")
             )
