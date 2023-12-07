@@ -122,7 +122,7 @@ class PurchaseDocuments(DynamicOnpremSink):
                 "description": line.get("productName"),
                 "number": line.get("productId"),
                 "orderDate": serviceDate,
-                "type": "Item"
+                "type": "Item" if self.stream_name == "PurchaseOrders" else "G/L Account",
             }
             custom_fields = line.get("customFields")
             if custom_fields:
