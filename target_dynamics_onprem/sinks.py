@@ -120,9 +120,9 @@ class PurchaseDocuments(DynamicOnpremSink):
                 "jobLineDiscountAmount": line.get("discount"),
                 "taxGroupCode": line.get("taxCode"),
                 "description": line.get("productName"),
-                "number": line.get("productId"),
+                "number": line.get("productId") if documentType == "Order" else line.get("accountNumber"),
                 "orderDate": serviceDate,
-                "type": "Item" if self.stream_name == "PurchaseOrders" else "G/L Account",
+                "type": "Item" if documentType == "Order" else "G/L Account",
             }
             custom_fields = line.get("customFields")
             if custom_fields:
