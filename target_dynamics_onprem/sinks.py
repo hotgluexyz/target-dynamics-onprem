@@ -123,6 +123,7 @@ class PurchaseDocuments(DynamicOnpremSink):
                 "number": line.get("productId") if documentType == "Order" else line.get("accountNumber"),
                 "orderDate": serviceDate,
                 "type": "Item" if documentType == "Order" else "G/L Account",
+                "directUnitCost": line.get("unitPrice")
             }
             custom_fields = line.get("customFields")
             if custom_fields:
