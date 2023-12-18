@@ -110,6 +110,8 @@ class PurchaseDocuments(DynamicOnpremSink):
         if po_custom_fields:
             [purchase_order_map.update({cf.get("name"): cf.get("value")}) for cf in po_custom_fields]
         lines = []
+        # add correlative line number
+        line_number = 0
         for line in record.get("lineItems", []):
             serviceDate = None
             if line.get("serviceDate"):
@@ -123,8 +125,11 @@ class PurchaseDocuments(DynamicOnpremSink):
                 "number": line.get("productId") if documentType == "Order" else line.get("accountNumber"),
                 "orderDate": serviceDate,
                 "type": "Item" if documentType == "Order" else "G/L Account",
-                "directUnitCost": line.get("unitPrice")
+                "directUnitCost": line.get("unitPrice"),
+                "lineNumber": line_number
             }
+            line_number = line_number + 1
+            #map custom fields
             custom_fields = line.get("customFields")
             if custom_fields:
                 [line_map.update({cf.get("name"): cf.get("value")}) for cf in custom_fields]
