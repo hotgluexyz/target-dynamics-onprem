@@ -7,7 +7,7 @@ from datetime import datetime
 class Vendors(DynamicOnpremSink):
     """Dynamics-onprem target sink class."""
 
-    endpoint = "/workflowVendors?$format=json"
+    endpoint = "/workflowVendors"
     available_names = ["Vendors"]
     name = "Vendors"
 
@@ -48,7 +48,7 @@ class Vendors(DynamicOnpremSink):
 class Items(DynamicOnpremSink):
     """Dynamics-onprem target sink class."""
 
-    endpoint = "/workflowItems?$format=json"
+    endpoint = "/workflowItems"
     available_names = ["Items"]
     name = "Items"
 
@@ -83,7 +83,7 @@ class Items(DynamicOnpremSink):
 class PurchaseDocuments(DynamicOnpremSink):
     """Dynamics-onprem target sink class."""
 
-    endpoint = "/purchaseDocuments?$format=json"
+    endpoint = "/purchaseDocuments"
     @property
     def name(self):
         return self.stream_name
@@ -150,13 +150,24 @@ class PurchaseDocuments(DynamicOnpremSink):
             )
             purchase_order = purchase_order.json()
             if purchase_order and purchase_order.get("number"):
-                pol_endpoint = self.endpoint.split("/")[0] + "/purchaseDocumentLines?$format=json"
+                pol_endpoint = self.endpoint.split("/")[0] + "/purchaseDocumentLines"
+                
                 for line in record.get("lines", []):
                     line["documentType"] = purchase_order.get("documentType")
                     line["documentNumber"] = purchase_order.get("number")
-                    purchase_order_lines = self.request_api(
-                        "POST", endpoint=pol_endpoint, request_data=line
-                    )
+                    try:
+                        purchase_order_lines = self.request_api(
+                            "POST", endpoint=pol_endpoint, request_data=line
+                        )
+                    except Exception as e:
+                        self.logger.info(f"Posting line {line} has failed")
+                        self.logger.info("Deleting purchase order header")
+                        delete_endpoint = f"{self.endpoint}({purchase_order.get('id')})"
+                        purchase_order_lines = self.request_api(
+                            "DELETE", endpoint=delete_endpoint
+                        )
+                        raise Exception(e)
+
             purchase_order_id = purchase_order["number"]
             self.logger.info(f"purchase_order created succesfully with Id {purchase_order_id}")
             return purchase_order_id, True, state_updates
@@ -164,7 +175,7 @@ class PurchaseDocuments(DynamicOnpremSink):
 class PurchaseInvoice(DynamicOnpremSink):
     """Dynamics-onprem target sink class."""
 
-    endpoint = "/Purchase_Invoice?$format=json"
+    endpoint = "/Purchase_Invoice"
     @property
     def name(self):
         return self.stream_name
@@ -237,8 +248,18 @@ class PurchaseInvoice(DynamicOnpremSink):
                 for line in record.get("lines"):
                     line["Document_Type"] = "Invoice"
                     line["Document_No"] = purchase_order_no
-                    purchase_order_lines = self.request_api(
-                        "POST", endpoint=pol_endpoint, request_data=line
-                    )
+                    try:
+                        purchase_order_lines = self.request_api(
+                            "POST", endpoint=pol_endpoint, request_data=line
+                        )
+                    except Exception as e:
+                        self.logger.info(f"Posting line {line} has failed")
+                        self.logger.info("Deleting purchase order header")
+                        delete_endpoint = f"{self.endpoint}({purchase_order.get('id')})"
+                        purchase_order_lines = self.request_api(
+                            "DELETE", endpoint=delete_endpoint
+                        )
+                        raise Exception(e)
+
             self.logger.info(f"purchase_invoice created succesfully with No {purchase_order_no}")
             return purchase_order_no, True, state_updates

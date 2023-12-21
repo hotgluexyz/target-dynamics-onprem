@@ -32,6 +32,8 @@ class DynamicOnpremSink(HotglueSink):
     def http_headers(self):
         return {}
     
+    params = {"$format": "json"}
+    
     def clean_convert(self, input):
         if isinstance(input, list):
             return [self.clean_convert(i) for i in input]
