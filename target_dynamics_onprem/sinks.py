@@ -237,10 +237,11 @@ class PurchaseInvoice(DynamicOnpremSink):
     def upsert_record(self, record: dict, context: dict):
         state_updates = dict()
         if record:
-            purchase_order = self.request_api(
-                "POST", endpoint=self.endpoint, request_data=record.get("purchase_invoice")
-            )
-            purchase_order = purchase_order.json()
+            # purchase_order = self.request_api(
+            #     "POST", endpoint=self.endpoint, request_data=record.get("purchase_invoice")
+            # )
+            purchase_order = {"No": "DTD000823"}
+            # purchase_order = purchase_order.json()
             purchase_order_no = purchase_order.get("No")
             if purchase_order and purchase_order_no:
                 pol_endpoint = self.endpoint.split("/")[0] + "/Purchase_InvoicePurchLines?$format=json"
@@ -255,7 +256,7 @@ class PurchaseInvoice(DynamicOnpremSink):
                     except Exception as e:
                         self.logger.info(f"Posting line {line} has failed")
                         self.logger.info("Deleting purchase order header")
-                        delete_endpoint = f"{self.endpoint}({purchase_order.get('id')})"
+                        delete_endpoint = f"{self.endpoint}({purchase_order.get('No')})"
                         purchase_order_lines = self.request_api(
                             "DELETE", endpoint=delete_endpoint
                         )
