@@ -237,11 +237,10 @@ class PurchaseInvoice(DynamicOnpremSink):
     def upsert_record(self, record: dict, context: dict):
         state_updates = dict()
         if record:
-            # purchase_order = self.request_api(
-            #     "POST", endpoint=self.endpoint, request_data=record.get("purchase_invoice"), params=self.params
-            # )
-            purchase_order = {"No": "DTD000823"}
-            # purchase_order = purchase_order.json()
+            purchase_order = self.request_api(
+                "POST", endpoint=self.endpoint, request_data=record.get("purchase_invoice"), params=self.params
+            )
+            purchase_order = purchase_order.json()
             purchase_order_no = purchase_order.get("No")
             if purchase_order and purchase_order_no:
                 pol_endpoint = self.endpoint.split("/")[0] + "/Purchase_InvoicePurchLines"
@@ -250,21 +249,13 @@ class PurchaseInvoice(DynamicOnpremSink):
                     line["Document_Type"] = "Invoice"
                     line["Document_No"] = purchase_order_no
                     try:
-                        raise Exception
                         purchase_order_lines = self.request_api(
                             "POST", endpoint=pol_endpoint, request_data=line, params=self.params
                         )
                     except Exception as e:
                         self.logger.info(f"Posting line {line} has failed")
                         self.logger.info("Deleting purchase order header")
-
-                        params = {"$filter": f"No eq '{purchase_order_no}'", "$format": "json"}
-                        purchase_order_delete = self.request_api(
-                            "GET", endpoint=self.endpoint, params=params
-                        )
-                        id = purchase_order_delete.json().get("id")
-                        self.logger.info(f"IDDDDD {id}")
-                        delete_endpoint = f"{self.endpoint}(Invoice)({purchase_order_no})"
+                        delete_endpoint = f"{self.endpoint}({purchase_order_no})"
                         purchase_order_lines = self.request_api(
                             "DELETE", endpoint=delete_endpoint
                         )
