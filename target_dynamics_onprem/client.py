@@ -78,7 +78,6 @@ class DynamicOnpremSink(HotglueSink):
         url = self.url(endpoint)
         headers.update(self.default_headers)
         headers.update({"Content-Type": "application/json"})
-        params.update(params)
         data = (
             json.dumps(request_data, cls=HGJSONEncoder)
             if request_data
