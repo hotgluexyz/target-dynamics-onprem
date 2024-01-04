@@ -237,11 +237,12 @@ class PurchaseInvoice(DynamicOnpremSink):
     def upsert_record(self, record: dict, context: dict):
         state_updates = dict()
         if record:
-            purchase_order = self.request_api(
-                "POST", endpoint=self.endpoint, request_data=record.get("purchase_invoice"), params=self.params
-            )
-            purchase_order = purchase_order.json()
-            purchase_order_no = purchase_order.get("No")
+            # purchase_order = self.request_api(
+            #     "POST", endpoint=self.endpoint, request_data=record.get("purchase_invoice"), params=self.params
+            # )
+            # purchase_order = purchase_order.json()
+            purchase_order = {}
+            purchase_order_no = "DTD000823"
             if purchase_order and purchase_order_no:
                 pol_endpoint = self.endpoint.split("/")[0] + "/Purchase_InvoicePurchLines"
                 self.logger.info("Posting purchase invoice lines")
@@ -249,15 +250,16 @@ class PurchaseInvoice(DynamicOnpremSink):
                     line["Document_Type"] = "Invoice"
                     line["Document_No"] = purchase_order_no
                     try:
-                        purchase_order_lines = self.request_api(
-                            "POST", endpoint=pol_endpoint, request_data=line, params=self.params
-                        )
+                        # purchase_order_lines = self.request_api(
+                        #     "POST", endpoint=pol_endpoint, request_data=line, params=self.params
+                        # )
+                        raise Exception
                     except Exception as e:
                         self.logger.info(f"Posting line {line} has failed")
                         self.logger.info("Deleting purchase order header")
                         delete_endpoint = f"{self.endpoint}({purchase_order_no})"
                         purchase_order_lines = self.request_api(
-                            "DELETE", endpoint=delete_endpoint
+                            "DELETE", endpoint=delete_endpoint, headers={"If-Match": "W/\"JzQ0O1pjbzdZRUliTmk3ZzhUQklwSk5DQkJSK0g4REFlZHBGSlVIOHVwbVdIcmc9MTswMDsn\""}
                         )
                         raise Exception(e)
 
