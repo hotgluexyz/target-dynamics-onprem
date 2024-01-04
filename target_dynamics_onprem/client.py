@@ -90,8 +90,8 @@ class DynamicOnpremSink(HotglueSink):
         else:
             auth = HttpNtlmAuth(self.config.get("username"), self.config.get("password"))        
 
-        self.logger.info(f"MAKING POST REQUEST")
-        self.logger.info(f"URL {url} params {params} data {data} auth {auth}")
+        self.logger.info(f"MAKING {http_method} REQUEST")
+        self.logger.info(f"URL {url} params {params} data {data}")
         response = requests.request(
             method=http_method,
             url=url,
