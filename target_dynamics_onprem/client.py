@@ -72,7 +72,7 @@ class DynamicOnpremSink(HotglueSink):
         factor=2,
     )
     def _request(
-        self, http_method, endpoint, auth, params, request_data=None, headers={}
+        self, http_method, endpoint, auth, params={"$format": "json"}, request_data=None, headers={}
     ) -> requests.PreparedRequest:
         """Prepare a request object."""
         url = self.url(endpoint)
