@@ -256,7 +256,7 @@ class PurchaseInvoice(DynamicOnpremSink):
                     except Exception as e:
                         self.logger.info(f"Posting line {line} has failed")
                         self.logger.info("Deleting purchase order header")
-                        delete_endpoint = f"{self.endpoint}({purchase_order.get('No')})"
+                        delete_endpoint = f"{self.endpoint}('{purchase_order.get('No')}')"
                         purchase_order_lines = self.request_api(
                             "DELETE", endpoint=delete_endpoint
                         )
