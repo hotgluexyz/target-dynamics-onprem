@@ -39,7 +39,7 @@ class Vendors(DynamicOnpremSink):
         state_updates = dict()
         if record:
             vendor = self.request_api(
-                "POST", endpoint=self.endpoint, request_data=record
+                "POST", endpoint=self.endpoint, request_data=record, params=self.params
             )
             vendor_id = vendor.json()["No"]
             self.logger.info(f"BuyOrder created succesfully with Id {vendor_id}")
@@ -74,7 +74,7 @@ class Items(DynamicOnpremSink):
         state_updates = dict()
         if record:
             item = self.request_api(
-                "POST", endpoint=self.endpoint, request_data=record
+                "POST", endpoint=self.endpoint, request_data=record, params=self.params
             )
             item_id = item.json()["No"]
             self.logger.info(f"Item created succesfully with Id {item_id}")
@@ -146,7 +146,7 @@ class PurchaseDocuments(DynamicOnpremSink):
         state_updates = dict()
         if record:
             purchase_order = self.request_api(
-                "POST", endpoint=self.endpoint, request_data=record.get("purchase_order")
+                "POST", endpoint=self.endpoint, request_data=record.get("purchase_order"), params=self.params
             )
             purchase_order = purchase_order.json()
             if purchase_order and purchase_order.get("number"):
@@ -238,33 +238,35 @@ class PurchaseInvoice(DynamicOnpremSink):
         state_updates = dict()
         if record:
             # purchase_order = self.request_api(
-            #     "POST", endpoint=self.endpoint, request_data=record.get("purchase_invoice")
+            #     "POST", endpoint=self.endpoint, request_data=record.get("purchase_invoice"), params=self.params
             # )
             purchase_order = {"No": "DTD000823"}
             # purchase_order = purchase_order.json()
             purchase_order_no = purchase_order.get("No")
             if purchase_order and purchase_order_no:
-                pol_endpoint = self.endpoint.split("/")[0] + "/Purchase_InvoicePurchLines?$format=json"
+                pol_endpoint = self.endpoint.split("/")[0] + "/Purchase_InvoicePurchLines"
                 self.logger.info("Posting purchase invoice lines")
                 for line in record.get("lines"):
                     line["Document_Type"] = "Invoice"
                     line["Document_No"] = purchase_order_no
                     try:
+                        raise Exception
                         purchase_order_lines = self.request_api(
-                            "POST", endpoint=pol_endpoint, request_data=line
+                            "POST", endpoint=pol_endpoint, request_data=line, params=self.params
                         )
                     except Exception as e:
                         self.logger.info(f"Posting line {line} has failed")
                         self.logger.info("Deleting purchase order header")
 
-                        params = {"$filter": f"No eq '{purchase_order_no}'"}
+                        params = {"$filter": f"No eq '{purchase_order_no}'", "$format": "json"}
                         purchase_order_delete = self.request_api(
                             "GET", endpoint=self.endpoint, params=params
                         )
                         id = purchase_order_delete.json().get("id")
-                        delete_endpoint = f"{self.endpoint}({id})"
+                        self.logger.info(f"IDDDDD {id}")
+                        delete_endpoint = f"{self.endpoint}(Invoice)({purchase_order_no})"
                         purchase_order_lines = self.request_api(
-                            "DELETE", endpoint=delete_endpoint, params={}
+                            "DELETE", endpoint=delete_endpoint
                         )
                         raise Exception(e)
 
