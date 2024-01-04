@@ -72,12 +72,13 @@ class DynamicOnpremSink(HotglueSink):
         factor=2,
     )
     def _request(
-        self, http_method, endpoint, auth, params={"$format": "json"}, request_data=None, headers={}
+        self, http_method, endpoint, auth, params, request_data=None, headers={}
     ) -> requests.PreparedRequest:
         """Prepare a request object."""
         url = self.url(endpoint)
         headers.update(self.default_headers)
         headers.update({"Content-Type": "application/json"})
+        params = self.params
         data = (
             json.dumps(request_data, cls=HGJSONEncoder)
             if request_data
