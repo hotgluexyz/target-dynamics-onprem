@@ -263,9 +263,9 @@ class PurchaseInvoice(DynamicOnpremSink):
                         error = {"error": e, "notes": "due to error during posting lines the purchase invoice header was deleted"}
                         raise Exception(error)
             #post purchase invoice
-            post_pi_endpoint = f"{self.endpoint}('Invoice','{purchase_order_no}')/Microsoft.NAV.post"
+            post_pi_endpoint = f"{self.endpoint}('Invoice','{purchase_order_no}')/NAV.Post"
             purchase_order_lines = self.request_api(
-                "POST", endpoint=post_pi_endpoint, request_data=line, params=self.params
+                "POST", endpoint=post_pi_endpoint, request_data=line, params={}
             )
 
             self.logger.info(f"purchase_invoice created succesfully with No {purchase_order_no}")
