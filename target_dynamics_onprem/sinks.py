@@ -329,6 +329,7 @@ class PurchaseInvoice(DynamicOnpremSink):
     def upsert_record(self, record: dict, context: dict):
         state_updates = dict()
         if record:
+            self.logger.info(f"USING ENDPOINT {self.endpoint} FOR HEADERS")
             purchase_order = self.request_api(
                 "POST", endpoint=self.endpoint, request_data=record.get("purchase_invoice"), params=self.params
             )
@@ -336,6 +337,7 @@ class PurchaseInvoice(DynamicOnpremSink):
             purchase_order_no = purchase_order.get("No")
             if purchase_order and purchase_order_no:
                 pol_endpoint = self.endpoint.split("/")[0] + "/PostedPurchaseInvoicePurchInvLines"
+                self.logger.info(f"USING ENDPOINT {pol_endpoint} FOR HEADERS")
                 self.logger.info("Posting purchase invoice lines")
                 for line in record.get("lines"):
                     line["Document_No"] = purchase_order_no
