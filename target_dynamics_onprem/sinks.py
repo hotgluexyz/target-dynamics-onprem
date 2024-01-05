@@ -175,7 +175,7 @@ class PurchaseDocuments(DynamicOnpremSink):
 class PurchaseInvoice(DynamicOnpremSink):
     """Dynamics-onprem target sink class."""
 
-    endpoint = "/Purchase_Invoice"
+    endpoint = "/Purchase_InvoiceKJLKJLKJ"
     @property
     def name(self):
         return self.stream_name
