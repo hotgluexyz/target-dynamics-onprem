@@ -276,6 +276,8 @@ class PurchaseInvoice(DynamicOnpremSink):
     bills_default = False
 
     def preprocess_record(self, record: dict, context: dict) -> None:
+        self.logger.info(f"PROCESSING RECORD")
+        self.logger.info(f"ENDPOINT {self.endpoint}")
         self.endpoint = self.get_endpoint(record)
         dueDate = None
         if record.get("dueDate"):
