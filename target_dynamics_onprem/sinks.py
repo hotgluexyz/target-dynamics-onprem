@@ -290,7 +290,6 @@ class PurchaseInvoice(DynamicOnpremSink):
 
         purchase_order_map = {
             "Buy_from_Vendor_Name": record.get("vendorName"),
-            "Buy_from_Vendor_No": record.get("vendorId"),
             "Due_Date": dueDate,
             "Document_Date": issueDate,
         }
