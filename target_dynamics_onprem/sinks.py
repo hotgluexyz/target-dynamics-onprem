@@ -244,7 +244,7 @@ class PurchaseInvoice(DynamicOnpremSink):
             purchase_order = purchase_order.json()
             purchase_order_no = purchase_order.get("No")
             if purchase_order and purchase_order_no:
-                pol_endpoint = self.endpoint.split("/")[0] + "/Purchase_InvoicePurchLines?$format=json"
+                pol_endpoint = self.endpoint.split("/")[0] + "/Purchase_InvoicePurchLines"
                 self.logger.info("Posting purchase invoice lines")
                 for line in record.get("lines"):
                     line["Document_Type"] = "Invoice"
@@ -260,7 +260,13 @@ class PurchaseInvoice(DynamicOnpremSink):
                         purchase_order_lines = self.request_api(
                             "DELETE", endpoint=delete_endpoint
                         )
+                        error = {"error": e, "notes": "due to error during posting lines the purchase invoice header was deleted"}
                         raise Exception(e)
+            #post purchase invoice
+            post_pi_endpoint = f"{self.endpoint}('Invoice','{purchase_order_no}')/Microsoft.NAV.post"
+            purchase_order_lines = self.request_api(
+                "POST", endpoint=post_pi_endpoint, request_data=line, params=self.params
+            )
 
             self.logger.info(f"purchase_invoice created succesfully with No {purchase_order_no}")
             return purchase_order_no, True, state_updates
