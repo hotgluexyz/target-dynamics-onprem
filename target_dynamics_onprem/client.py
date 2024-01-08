@@ -24,7 +24,12 @@ class DynamicOnpremSink(HotglueSink):
 
     @property
     def base_url(self):
-        base_url = f"{self.config.get('url_base')}/Company"
+        base_url = f"{self.config.get('url_base')}"
+        if "api" in base_url:
+            company_key = "companies"
+        elif "OData" in base_url:
+            company_key = "Company"
+        base_url = f"{base_url}/{company_key}"
         self.logger.info(f"BASE URL: {base_url}")
         return base_url
 
