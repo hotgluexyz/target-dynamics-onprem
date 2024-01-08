@@ -183,7 +183,6 @@ class PurchaseInvoice(DynamicOnpremSink):
     bills_default = False
 
     def preprocess_record(self, record: dict, context: dict) -> None:
-        self.logger.info("PROCCESSING RECORD")
         self.endpoint = self.get_endpoint(record)
         dueDate = None
         if record.get("dueDate"):
@@ -263,7 +262,7 @@ class PurchaseInvoice(DynamicOnpremSink):
                         error = {"error": e, "notes": "due to error during posting lines the purchase invoice header was deleted"}
                         raise Exception(error)
             #post purchase invoice
-            post_pi_endpoint = f"{self.endpoint}('Invoice','{purchase_order_no}')/NAV.post"
+            post_pi_endpoint = f"{self.endpoint}('Invoice','{purchase_order_no}')/Microsoft.NAV.post"
             purchase_order_lines = self.request_api(
                 "POST", endpoint=post_pi_endpoint, request_data=line, params={}
             )
@@ -272,95 +271,98 @@ class PurchaseInvoice(DynamicOnpremSink):
             return purchase_order_no, True, state_updates
 
 
-# class PurchaseInvoice(DynamicOnpremSink):
-#     """Dynamics-onprem target sink class."""
+class PurchaseInvoice(DynamicOnpremSink):
+    """Dynamics-onprem target sink class."""
 
-#     endpoint = "/PostedPurchaseInvoice"
-#     @property
-#     def name(self):
-#         return self.stream_name
-#     available_names = ["PurchaseInvoices", "Bills"]
-#     bills_default = False
+    endpoint = "/purchaseInvoices"
+    @property
+    def name(self):
+        return self.stream_name
+    available_names = ["PurchaseInvoices", "Bills"]
+    bills_default = False
 
-#     def preprocess_record(self, record: dict, context: dict) -> None:
-#         self.logger.info(f"PROCESSING RECORD")
-#         self.logger.info(f"ENDPOINT {self.endpoint}")
-#         self.endpoint = self.get_endpoint(record)
-#         dueDate = None
-#         if record.get("dueDate"):
-#             dueDate = self.convert_date(record.get("dueDate"))
+    def preprocess_record(self, record: dict, context: dict) -> None:
+        self.endpoint = self.get_endpoint(record)
+        dueDate = None
+        if record.get("dueDate"):
+            dueDate = self.convert_date(record.get("dueDate"))
         
-#         issueDate = None
-#         if record.get("issueDate"):
-#             issueDate = self.convert_date(record.get("issueDate"))
+        issueDate = None
+        if record.get("issueDate"):
+            issueDate = self.convert_date(record.get("issueDate"))
 
-#         purchase_order_map = {
-#             "Buy_from_Vendor_Name": record.get("vendorName"),
-#             "Due_Date": dueDate,
-#             "Document_Date": issueDate,
-#         }
-#         # map purchase order custom fields
-#         po_custom_fields = record.get("customFields")
-#         if po_custom_fields:
-#             [purchase_order_map.update({cf.get("name"): cf.get("value")}) for cf in po_custom_fields]
+        purchase_order_map = {
+            "invoiceDate": issueDate,
+            "dueDate": dueDate,
+            "vendorNumber": record.get("vendorId"),
+            "vendorName": record.get("vendorName"),
+            "totalAmountIncludingTax": record.get("totalAmount"),
+            "currency": record.get("currency"),
+            "purchaseInvoiceLines": []
+        }
+        # map purchase order custom fields
+        po_custom_fields = record.get("customFields")
+        if po_custom_fields:
+            [purchase_order_map.update({cf.get("name"): cf.get("value")}) for cf in po_custom_fields]
         
-#         # map lines
-#         lines = []
-#         pi_lines = record.get("lineItems")
-#         if isinstance(pi_lines, str):
-#             pi_lines = self.parse_objs(pi_lines)
-#         for line in pi_lines:
-#             type = "G/L Account" if line.get("accountNumber") else "Item" if line.get("productNumber") else None
-#             line_map = {
-#                 "Line_Amount": line.get("totalPrice"),
-#                 "Description": line.get("description"),
-#                 "Type": type,
-#                 "No": str(line.get("accountNumber")),
-#                 "Quantity": line.get("quantity", 1),
-#                 "Direct_Unit_Cost": line.get("unitPrice", line.get("totalPrice")),
-#             }
+        # map lines
+        pi_lines = record.get("lineItems")
+        if isinstance(pi_lines, str):
+            pi_lines = self.parse_objs(pi_lines)
+        for line in pi_lines:
+            type = "G/L Account" if line.get("accountNumber") else "Item" if line.get("productNumber") else None
+            line_map = {
+                "lineType": type,
+                "description": line.get("description"),
+                "quantity": line.get("quantity", 1),
+                "taxCode": line.get("taxCode"),
+                "amountIncludingTax": line.get("unitPrice", line.get("totalPrice")),
+                "item": line.get("productNumber"),
+                "account": line.get("accountNumber"),
+            }
 
-#             custom_fields = line.get("customFields")
-#             if custom_fields:
-#                 [line_map.update({cf.get("name"): cf.get("value")}) for cf in custom_fields]
+            custom_fields = line.get("customFields")
+            if custom_fields:
+                [line_map.update({cf.get("name"): cf.get("value")}) for cf in custom_fields]
 
-#             lines.append(line_map)
+            purchase_order_map["purchaseInvoiceLines"].append(line_map)
 
-#         payload = {
-#             "purchase_invoice" : purchase_order_map,
-#             "lines": lines
-#         }
-#         mapping = self.clean_convert(payload)
+        mapping = self.clean_convert(purchase_order_map)
 
-#         return mapping
+        return mapping
 
-#     def upsert_record(self, record: dict, context: dict):
-#         state_updates = dict()
-#         if record:
-#             self.logger.info(f"USING ENDPOINT {self.endpoint} FOR HEADERS")
-#             purchase_order = self.request_api(
-#                 "POST", endpoint=self.endpoint, request_data=record.get("purchase_invoice"), params=self.params
-#             )
-#             purchase_order = purchase_order.json()
-#             purchase_order_no = purchase_order.get("No")
-#             if purchase_order and purchase_order_no:
-#                 pol_endpoint = self.endpoint.split("/")[0] + "/PostedPurchaseInvoicePurchInvLines"
-#                 self.logger.info(f"USING ENDPOINT {pol_endpoint} FOR HEADERS")
-#                 self.logger.info("Posting purchase invoice lines")
-#                 for line in record.get("lines"):
-#                     line["Document_No"] = purchase_order_no
-#                     try:
-#                         purchase_order_lines = self.request_api(
-#                             "POST", endpoint=pol_endpoint, request_data=line, params=self.params
-#                         )
-#                     except Exception as e:
-#                         self.logger.info(f"Posting line {line} has failed")
-#                         self.logger.info("Deleting purchase order header")
-#                         delete_endpoint = f"{self.endpoint}({purchase_order_no})"
-#                         purchase_order_lines = self.request_api(
-#                             "DELETE", endpoint=delete_endpoint
-#                         )
-#                         raise Exception(e)
+    def upsert_record(self, record: dict, context: dict):
+        state_updates = dict()
+        if record:
+            purchase_order = self.request_api(
+                "POST", endpoint=self.endpoint, request_data=record, params=self.params
+            )
+            purchase_order = purchase_order.json()
+            purchase_order_no = purchase_order.get("number")
+            # if purchase_order and purchase_order_no:
+            #     pol_endpoint = self.endpoint.split("/")[0] + "/Purchase_InvoicePurchLines"
+            #     self.logger.info("Posting purchase invoice lines")
+            #     for line in record.get("lines"):
+            #         line["Document_Type"] = "Invoice"
+            #         line["Document_No"] = purchase_order_no
+            #         try:
+            #             purchase_order_lines = self.request_api(
+            #                 "POST", endpoint=pol_endpoint, request_data=line, params=self.params
+            #             )
+                    # except Exception as e:
+                    #     self.logger.info(f"Posting line {line} has failed")
+                    #     self.logger.info("Deleting purchase order header")
+                    #     delete_endpoint = f"{self.endpoint}('Invoice','{purchase_order_no}')"
+                    #     purchase_order_lines = self.request_api(
+                    #         "DELETE", endpoint=delete_endpoint
+                    #     )
+                    #     error = {"error": e, "notes": "due to error during posting lines the purchase invoice header was deleted"}
+                    #     raise Exception(error)
+            #post purchase invoice
+            # post_pi_endpoint = f"{self.endpoint}('Invoice','{purchase_order_no}')/Microsoft.NAV.post"
+            # purchase_order_lines = self.request_api(
+            #     "POST", endpoint=post_pi_endpoint, request_data=line, params={}
+            # )
 
-#             self.logger.info(f"purchase_invoice created succesfully with No {purchase_order_no}")
-#             return purchase_order_no, True, state_updates
+            self.logger.info(f"purchase_invoice created succesfully with No {purchase_order_no}")
+            return purchase_order_no, True, state_updates
