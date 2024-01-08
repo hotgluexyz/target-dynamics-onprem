@@ -23,13 +23,17 @@ class DynamicOnpremSink(HotglueSink):
         super().__init__(target, stream_name, schema, key_properties)
 
     @property
-    def base_url(self):
+    def company_key(self):
         base_url = f"{self.config.get('url_base')}"
         if "api" in base_url:
             company_key = "companies"
         elif "OData" in base_url:
             company_key = "Company"
-        base_url = f"{base_url}/{company_key}"
+        return company_key
+
+    @property
+    def base_url(self):
+        base_url = f"{self.config.get('url_base')}{self.company_key}"
         self.logger.info(f"BASE URL: {base_url}")
         return base_url
 
@@ -68,7 +72,10 @@ class DynamicOnpremSink(HotglueSink):
     def get_endpoint(self, record):
         #use subsidiary as company if passed, else use company from config
         company_id = record.get("subsidiary") or self.config.get("company_id")
-        return f"('{company_id}')" + self.endpoint
+        if self.company_key == "Company":
+            return f"('{company_id}')" + self.endpoint
+        elif self.company_key == "companies":
+            return f"({company_id})" + self.endpoint
     
     @backoff.on_exception(
         backoff.expo,

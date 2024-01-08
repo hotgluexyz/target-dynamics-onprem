@@ -338,7 +338,7 @@ class PurchaseInvoice(DynamicOnpremSink):
             purch_inv_get = f"{self.endpoint}(84bea166-4d9b-ee11-98c2-6045bdaa646f)?$expand=dimensionSetLines,purchaseInvoiceLines($expand=dimensionSetLines)"
             self.logger.info("TESTING GET REQUEST TO LATEST ENDPOINT")
             purchase_order = self.request_api(
-                "GET", endpoint=self.endpoint
+                "GET", endpoint=purch_inv_get
             )
 
             purchase_order = self.request_api(
