@@ -334,6 +334,13 @@ class PurchaseInvoice(DynamicOnpremSink):
     def upsert_record(self, record: dict, context: dict):
         state_updates = dict()
         if record:
+            #testing get endpoint
+            purch_inv_get = f"{self.endpoint}(84bea166-4d9b-ee11-98c2-6045bdaa646f)?$expand=dimensionSetLines,purchaseInvoiceLines($expand=dimensionSetLines)"
+            self.logger.info("TESTING GET REQUEST TO LATEST ENDPOINT")
+            purchase_order = self.request_api(
+                "GET", endpoint=self.endpoint, request_data=record, params=self.params
+            )
+
             purchase_order = self.request_api(
                 "POST", endpoint=self.endpoint, request_data=record, params=self.params
             )
