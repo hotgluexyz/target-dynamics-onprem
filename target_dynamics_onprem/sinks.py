@@ -335,41 +335,31 @@ class PurchaseInvoice(DynamicOnpremSink):
         state_updates = dict()
         if record:
             #testing get endpoint
-            purch_inv_get = f"{self.endpoint}(84bea166-4d9b-ee11-98c2-6045bdaa646f)?$expand=dimensionSetLines,purchaseInvoiceLines($expand=dimensionSetLines)"
             self.logger.info("TESTING GET REQUEST TO LATEST ENDPOINT")
-            purchase_order = self.request_api(
-                "GET", endpoint=purch_inv_get
-            )
+            lines = record.pop("purchaseInvoiceLines", None)
+            if lines:
+                purchase_order = self.request_api(
+                    "POST", endpoint=self.endpoint, request_data=record, params=self.params
+                )
+                purchase_order = purchase_order.json()
+                purchase_order_id = purchase_order.get("id")
+                if purchase_order and purchase_order_id:
+                    pol_endpoint = f"{self.endpoint}({purchase_order_id})/purchaseInvoiceLines"
+                    self.logger.info("Posting purchase invoice lines")
+                    for line in lines:
+                        try:
+                            purchase_order_lines = self.request_api(
+                                "POST", endpoint=pol_endpoint, request_data=line, params=self.params
+                            )
+                        except Exception as e:
+                            self.logger.info(f"Posting line {line} has failed")
+                            self.logger.info("Deleting purchase order header")
+                            delete_endpoint = f"{self.endpoint}({purchase_order_id})"
+                            purchase_order_lines = self.request_api(
+                                "DELETE", endpoint=delete_endpoint
+                            )
+                            error = {"error": e, "notes": "due to error during posting lines the purchase invoice header was deleted"}
+                            raise Exception(error)
 
-            purchase_order = self.request_api(
-                "POST", endpoint=self.endpoint, request_data=record, params=self.params
-            )
-            purchase_order = purchase_order.json()
-            purchase_order_no = purchase_order.get("number")
-            # if purchase_order and purchase_order_no:
-            #     pol_endpoint = self.endpoint.split("/")[0] + "/Purchase_InvoicePurchLines"
-            #     self.logger.info("Posting purchase invoice lines")
-            #     for line in record.get("lines"):
-            #         line["Document_Type"] = "Invoice"
-            #         line["Document_No"] = purchase_order_no
-            #         try:
-            #             purchase_order_lines = self.request_api(
-            #                 "POST", endpoint=pol_endpoint, request_data=line, params=self.params
-            #             )
-                    # except Exception as e:
-                    #     self.logger.info(f"Posting line {line} has failed")
-                    #     self.logger.info("Deleting purchase order header")
-                    #     delete_endpoint = f"{self.endpoint}('Invoice','{purchase_order_no}')"
-                    #     purchase_order_lines = self.request_api(
-                    #         "DELETE", endpoint=delete_endpoint
-                    #     )
-                    #     error = {"error": e, "notes": "due to error during posting lines the purchase invoice header was deleted"}
-                    #     raise Exception(error)
-            #post purchase invoice
-            # post_pi_endpoint = f"{self.endpoint}('Invoice','{purchase_order_no}')/Microsoft.NAV.post"
-            # purchase_order_lines = self.request_api(
-            #     "POST", endpoint=post_pi_endpoint, request_data=line, params={}
-            # )
-
-            self.logger.info(f"purchase_invoice created succesfully with No {purchase_order_no}")
-            return purchase_order_no, True, state_updates
+                self.logger.info(f"purchase_invoice created succesfully with No {purchase_order_id}")
+                return purchase_order_id, True, state_updates
