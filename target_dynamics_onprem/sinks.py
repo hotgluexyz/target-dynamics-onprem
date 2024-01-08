@@ -295,7 +295,6 @@ class PurchaseInvoice(DynamicOnpremSink):
             "invoiceDate": issueDate,
             "dueDate": dueDate,
             "vendorNumber": record.get("vendorId"),
-            "vendorName": record.get("vendorName"),
             "totalAmountIncludingTax": record.get("totalAmount"),
             "currency": record.get("currency"),
             "purchaseInvoiceLines": []
