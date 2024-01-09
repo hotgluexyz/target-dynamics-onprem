@@ -172,7 +172,7 @@ class PurchaseDocuments(DynamicOnpremSink):
             self.logger.info(f"purchase_order created succesfully with Id {purchase_order_id}")
             return purchase_order_id, True, state_updates
 
-class PurchaseInvoice(DynamicOnpremSink):
+class Purchase_Invoice(DynamicOnpremSink):
     """Dynamics-onprem target sink class."""
 
     endpoint = "/Purchase_Invoice"
@@ -263,3 +263,93 @@ class PurchaseInvoice(DynamicOnpremSink):
                         raise Exception(error)
             self.logger.info(f"purchase_invoice created succesfully with No {purchase_order_no}")
             return purchase_order_no, True, state_updates
+        
+
+class PurchaseInvoices(DynamicOnpremSink):
+    """Dynamics-onprem target sink class."""
+
+    endpoint = "/purchaseInvoices"
+    @property
+    def name(self):
+        return self.stream_name
+    available_names = ["PurchaseInvoices", "Bills"]
+    bills_default = False
+
+    def preprocess_record(self, record: dict, context: dict) -> None:
+        self.endpoint = self.get_endpoint(record)
+        dueDate = None
+        if record.get("dueDate"):
+            dueDate = self.convert_date(record.get("dueDate"))
+        
+        issueDate = None
+        if record.get("issueDate"):
+            issueDate = self.convert_date(record.get("issueDate"))
+
+        purchase_order_map = {
+            "invoiceDate": issueDate,
+            "dueDate": dueDate,
+            "vendorNumber": record.get("vendorId"),
+            "totalAmountIncludingTax": record.get("totalAmount"),
+            "currency": record.get("currency"),
+            "purchaseInvoiceLines": []
+        }
+        # map purchase order custom fields
+        po_custom_fields = record.get("customFields")
+        if po_custom_fields:
+            [purchase_order_map.update({cf.get("name"): cf.get("value")}) for cf in po_custom_fields]
+        
+        # map lines
+        pi_lines = record.get("lineItems")
+        if isinstance(pi_lines, str):
+            pi_lines = self.parse_objs(pi_lines)
+        for line in pi_lines:
+            type = "Account" if line.get("accountNumber") else "Item" if line.get("productNumber") else None
+            line_map = {
+                "lineType": type,
+                "lineObjectNumber": line.get("accountNumber", line.get("productNumber")),
+                "description": line.get("description"),
+                "quantity": line.get("quantity", 1),
+                "taxCode": line.get("taxCode"),
+                "amountIncludingTax": line.get("unitPrice", line.get("totalPrice")),
+            }
+
+            custom_fields = line.get("customFields")
+            if custom_fields:
+                [line_map.update({cf.get("name"): cf.get("value")}) for cf in custom_fields]
+
+            purchase_order_map["purchaseInvoiceLines"].append(line_map)
+
+        mapping = self.clean_convert(purchase_order_map)
+
+        return mapping
+
+    def upsert_record(self, record: dict, context: dict):
+        state_updates = dict()
+        if record:
+            lines = record.pop("purchaseInvoiceLines", None)
+            if lines:
+                purchase_order = self.request_api(
+                    "POST", endpoint=self.endpoint, request_data=record, params=self.params
+                )
+                purchase_order = purchase_order.json()
+                purchase_order_id = purchase_order.get("id")
+                if purchase_order and purchase_order_id:
+                    pol_endpoint = f"{self.endpoint}({purchase_order_id})/purchaseInvoiceLines"
+                    self.logger.info("Posting purchase invoice lines")
+                    for line in lines:
+                        try:
+                            purchase_order_lines = self.request_api(
+                                "POST", endpoint=pol_endpoint, request_data=line, params=self.params
+                            )
+                        except Exception as e:
+                            self.logger.info(f"Posting line {line} has failed")
+                            self.logger.info("Deleting purchase order header")
+                            delete_endpoint = f"{self.endpoint}({purchase_order_id})"
+                            purchase_order_lines = self.request_api(
+                                "DELETE", endpoint=delete_endpoint
+                            )
+                            error = {"error": e, "notes": "due to error during posting lines the purchase invoice header was deleted"}
+                            raise Exception(error)
+
+                self.logger.info(f"purchase_invoice created succesfully with No {purchase_order_id}")
+                return purchase_order_id, True, state_updates

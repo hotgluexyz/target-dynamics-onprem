@@ -6,7 +6,8 @@ from target_dynamics_onprem.sinks import (
     Vendors,
     Items,
     PurchaseDocuments,
-    PurchaseInvoice
+    PurchaseInvoices,
+    Purchase_Invoice
 )
 from singer_sdk.sinks import Sink
 from typing import Type
@@ -15,7 +16,7 @@ from typing import Type
 class TargetDynamicsOnprem(TargetHotglue):
     """Sample target for Dynamics-onprem."""
     name = "target-dynamics-onprem"
-    SINK_TYPES = [Vendors, Items, PurchaseDocuments, PurchaseInvoice]
+    SINK_TYPES = [Vendors, Items, PurchaseDocuments, PurchaseInvoices, Purchase_Invoice]
     MAX_PARALLELISM = 10
     config_jsonschema = th.PropertiesList(
         th.Property(
@@ -44,11 +45,11 @@ class TargetDynamicsOnprem(TargetHotglue):
         for sink_class in self.SINK_TYPES:
             # Search for streams with multiple names
             if stream_name in sink_class.available_names:
-                # for Bills if flag usePurchaseInvoice use PurchaseInvoices else use PurchaseDocuments as default
                 if stream_name == "Bills":
-                    if self.config.get("usePurchaseInvoice"):
-                        if sink_class.bills_default:
-                            continue
+                    if f"/{self.config.get('bills_endpoint')}" == sink_class.endpoint:
+                        return sink_class
+                    else:
+                        continue
                 return sink_class
 
 
