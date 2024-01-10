@@ -23,8 +23,17 @@ class DynamicOnpremSink(HotglueSink):
         super().__init__(target, stream_name, schema, key_properties)
 
     @property
+    def company_key(self):
+        base_url = f"{self.config.get('url_base')}"
+        if "api" in base_url:
+            company_key = "companies"
+        elif "OData" in base_url:
+            company_key = "Company"
+        return company_key
+
+    @property
     def base_url(self):
-        base_url = f"{self.config.get('url_base')}/Company"
+        base_url = f"{self.config.get('url_base')}{self.company_key}"
         self.logger.info(f"BASE URL: {base_url}")
         return base_url
 
@@ -57,13 +66,16 @@ class DynamicOnpremSink(HotglueSink):
     
     def request_api(self, http_method, endpoint=None, params={}, request_data=None, headers={}):
         """Request records from REST endpoint(s), returning response records."""
-        resp = self._request(http_method, endpoint, params, headers, request_data=request_data)
+        resp = self._request(http_method, endpoint, params=params, headers=headers, request_data=request_data)
         return resp
     
     def get_endpoint(self, record):
         #use subsidiary as company if passed, else use company from config
         company_id = record.get("subsidiary") or self.config.get("company_id")
-        return f"('{company_id}')" + self.endpoint
+        if self.company_key == "Company":
+            return f"('{company_id}')" + self.endpoint
+        elif self.company_key == "companies":
+            return f"({company_id})" + self.endpoint
     
     @backoff.on_exception(
         backoff.expo,
@@ -72,7 +84,7 @@ class DynamicOnpremSink(HotglueSink):
         factor=2,
     )
     def _request(
-        self, http_method, endpoint, auth, params, request_data=None, headers={}
+        self, http_method, endpoint, auth=None, params={}, request_data=None, headers={}
     ) -> requests.PreparedRequest:
         """Prepare a request object."""
         url = self.url(endpoint)
