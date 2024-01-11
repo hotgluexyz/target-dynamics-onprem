@@ -328,7 +328,8 @@ class PurchaseInvoices(DynamicOnpremSink):
 
     def get_dimension_line(self, custom_field):
         dimension_line = {
-            "valueCode": custom_field.get("value")
+            "code": "PROJECT",
+            "valueCode": custom_field.get("value"),
         }
         return dimension_line
 
@@ -428,7 +429,7 @@ class PurchaseInvoices(DynamicOnpremSink):
                             pol_id = purchase_order_lines.json().get("id")
                             #set dimension lines
                             for sdl in dimension_set_lines:
-                                sdl_endpoint = f"{pol_endpoint}({pol_id})/dimensionSetLines(df226f93-3ead-ed11-be65-6045bde95266)"
+                                sdl_endpoint = f"{pol_endpoint}({pol_id})/dimensionSetLines"
                                 self.logger.info(f"ENDPOINT FOR SDL {sdl_endpoint}")
                                 purchase_order_lines = self.request_api(
                                     "POST",
