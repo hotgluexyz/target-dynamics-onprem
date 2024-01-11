@@ -426,7 +426,7 @@ class PurchaseInvoices(DynamicOnpremSink):
                                 request_data=line,
                                 params=self.params,
                             )
-                            pol_id = purchase_order_lines.json()
+                            pol_id = purchase_order_lines.json().get("id")
                             #set dimension lines
                             sdl_endpoint = f"{pol_endpoint}({pol_id})/dimensionSetLines"
                             self.logger.info(f"SDL ENDPOINTTT {sdl_endpoint}")
