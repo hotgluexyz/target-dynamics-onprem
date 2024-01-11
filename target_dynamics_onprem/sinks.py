@@ -44,7 +44,8 @@ class Vendors(DynamicOnpremSink):
             vendor_id = vendor.json()["No"]
             self.logger.info(f"BuyOrder created succesfully with Id {vendor_id}")
             return vendor_id, True, state_updates
-        
+
+
 class Items(DynamicOnpremSink):
     """Dynamics-onprem target sink class."""
 
@@ -62,7 +63,7 @@ class Items(DynamicOnpremSink):
             "itemCategoryCode": record.get("category"),
         }
         if record.get("billItem", record.get("invoiceItem")):
-            bill_item = record.get("billItem",record.get("invoiceItem"))
+            bill_item = record.get("billItem", record.get("invoiceItem"))
             bill_item = json.loads(bill_item)
             mapping["description2"] = bill_item.get("description")
             mapping["unitPrice"] = bill_item.get("unitPrice")
@@ -79,14 +80,17 @@ class Items(DynamicOnpremSink):
             item_id = item.json()["No"]
             self.logger.info(f"Item created succesfully with Id {item_id}")
             return item_id, True, state_updates
-        
+
+
 class PurchaseDocuments(DynamicOnpremSink):
     """Dynamics-onprem target sink class."""
 
     endpoint = "/purchaseDocuments"
+
     @property
     def name(self):
         return self.stream_name
+
     available_names = ["PurchaseOrders", "Bills"]
     bills_default = True
 
@@ -108,7 +112,10 @@ class PurchaseDocuments(DynamicOnpremSink):
         }
         po_custom_fields = record.get("customFields")
         if po_custom_fields:
-            [purchase_order_map.update({cf.get("name"): cf.get("value")}) for cf in po_custom_fields]
+            [
+                purchase_order_map.update({cf.get("name"): cf.get("value")})
+                for cf in po_custom_fields
+            ]
         lines = []
         # add correlative line number
         line_number = 0
@@ -122,23 +129,25 @@ class PurchaseDocuments(DynamicOnpremSink):
                 "jobLineDiscountAmount": line.get("discount"),
                 "taxGroupCode": line.get("taxCode"),
                 "description": line.get("productName"),
-                "number": line.get("productId") if documentType == "Order" else line.get("accountNumber"),
+                "number": line.get("productId")
+                if documentType == "Order"
+                else line.get("accountNumber"),
                 "orderDate": serviceDate,
                 "type": "Item" if documentType == "Order" else "G/L Account",
                 "directUnitCost": line.get("unitPrice"),
-                "lineNumber": line_number
+                "lineNumber": line_number,
             }
             line_number = line_number + 1
-            #map custom fields
+            # map custom fields
             custom_fields = line.get("customFields")
             if custom_fields:
-                [line_map.update({cf.get("name"): cf.get("value")}) for cf in custom_fields]
+                [
+                    line_map.update({cf.get("name"): cf.get("value")})
+                    for cf in custom_fields
+                ]
             lines.append(line_map)
 
-        payload = {
-            "purchase_order" : purchase_order_map,
-            "lines": lines
-        }
+        payload = {"purchase_order": purchase_order_map, "lines": lines}
         mapping = self.clean_convert(payload)
         return mapping
 
@@ -146,12 +155,15 @@ class PurchaseDocuments(DynamicOnpremSink):
         state_updates = dict()
         if record:
             purchase_order = self.request_api(
-                "POST", endpoint=self.endpoint, request_data=record.get("purchase_order"), params=self.params
+                "POST",
+                endpoint=self.endpoint,
+                request_data=record.get("purchase_order"),
+                params=self.params,
             )
             purchase_order = purchase_order.json()
             if purchase_order and purchase_order.get("number"):
                 pol_endpoint = self.endpoint.split("/")[0] + "/purchaseDocumentLines"
-                
+
                 for line in record.get("lines", []):
                     line["documentType"] = purchase_order.get("documentType")
                     line["documentNumber"] = purchase_order.get("number")
@@ -169,16 +181,21 @@ class PurchaseDocuments(DynamicOnpremSink):
                         raise Exception(e)
 
             purchase_order_id = purchase_order["number"]
-            self.logger.info(f"purchase_order created succesfully with Id {purchase_order_id}")
+            self.logger.info(
+                f"purchase_order created succesfully with Id {purchase_order_id}"
+            )
             return purchase_order_id, True, state_updates
+
 
 class Purchase_Invoice(DynamicOnpremSink):
     """Dynamics-onprem target sink class."""
 
     endpoint = "/Purchase_Invoice"
+
     @property
     def name(self):
         return self.stream_name
+
     available_names = ["PurchaseInvoices", "Bills"]
     bills_default = False
 
@@ -187,7 +204,7 @@ class Purchase_Invoice(DynamicOnpremSink):
         dueDate = None
         if record.get("dueDate"):
             dueDate = self.convert_date(record.get("dueDate"))
-        
+
         issueDate = None
         if record.get("issueDate"):
             issueDate = self.convert_date(record.get("issueDate"))
@@ -197,20 +214,29 @@ class Purchase_Invoice(DynamicOnpremSink):
             "Buy_from_Vendor_No": record.get("vendorId"),
             "Due_Date": dueDate,
             "Invoice_Receipt_Date": issueDate,
-            "Document_Type": "Invoice"
+            "Document_Type": "Invoice",
         }
         # map purchase order custom fields
         po_custom_fields = record.get("customFields")
         if po_custom_fields:
-            [purchase_order_map.update({cf.get("name"): cf.get("value")}) for cf in po_custom_fields]
-        
+            [
+                purchase_order_map.update({cf.get("name"): cf.get("value")})
+                for cf in po_custom_fields
+            ]
+
         # map lines
         lines = []
         pi_lines = record.get("lineItems")
         if isinstance(pi_lines, str):
             pi_lines = self.parse_objs(pi_lines)
         for line in pi_lines:
-            type = "G/L Account" if line.get("accountNumber") else "Item" if line.get("productNumber") else None
+            type = (
+                "G/L Account"
+                if line.get("accountNumber")
+                else "Item"
+                if line.get("productNumber")
+                else None
+            )
             line_map = {
                 "Line_Amount": line.get("totalPrice"),
                 "Description": line.get("description"),
@@ -222,14 +248,14 @@ class Purchase_Invoice(DynamicOnpremSink):
 
             custom_fields = line.get("customFields")
             if custom_fields:
-                [line_map.update({cf.get("name"): cf.get("value")}) for cf in custom_fields]
+                [
+                    line_map.update({cf.get("name"): cf.get("value")})
+                    for cf in custom_fields
+                ]
 
             lines.append(line_map)
 
-        payload = {
-            "purchase_invoice" : purchase_order_map,
-            "lines": lines
-        }
+        payload = {"purchase_invoice": purchase_order_map, "lines": lines}
         mapping = self.clean_convert(payload)
 
         return mapping
@@ -238,36 +264,53 @@ class Purchase_Invoice(DynamicOnpremSink):
         state_updates = dict()
         if record:
             purchase_order = self.request_api(
-                "POST", endpoint=self.endpoint, request_data=record.get("purchase_invoice"), params=self.params
+                "POST",
+                endpoint=self.endpoint,
+                request_data=record.get("purchase_invoice"),
+                params=self.params,
             )
             purchase_order = purchase_order.json()
             purchase_order_no = purchase_order.get("No")
             if purchase_order and purchase_order_no:
-                pol_endpoint = self.endpoint.split("/")[0] + "/Purchase_InvoicePurchLines"
+                pol_endpoint = (
+                    self.endpoint.split("/")[0] + "/Purchase_InvoicePurchLines"
+                )
                 self.logger.info("Posting purchase invoice lines")
                 for line in record.get("lines"):
                     line["Document_Type"] = "Invoice"
                     line["Document_No"] = purchase_order_no
                     try:
                         purchase_order_lines = self.request_api(
-                            "POST", endpoint=pol_endpoint, request_data=line, params=self.params
+                            "POST",
+                            endpoint=pol_endpoint,
+                            request_data=line,
+                            params=self.params,
                         )
                     except Exception as e:
                         self.logger.info(f"Posting line {line} has failed")
                         self.logger.info("Deleting purchase order header")
-                        delete_endpoint = f"{self.endpoint}('Invoice','{purchase_order_no}')"
+                        delete_endpoint = (
+                            f"{self.endpoint}('Invoice','{purchase_order_no}')"
+                        )
                         purchase_order_lines = self.request_api(
                             "DELETE", endpoint=delete_endpoint
                         )
-                        error = {"error": e, "notes": "due to error during posting lines the purchase invoice header was deleted"}
+                        error = {
+                            "error": e,
+                            "notes": "due to error during posting lines the purchase invoice header was deleted",
+                        }
                         raise Exception(error)
-            #post purchase invoice
-            post_pi_endpoint = f"{self.endpoint}('Invoice','{purchase_order_no}')/Microsoft.NAV.post"
+            # post purchase invoice
+            post_pi_endpoint = (
+                f"{self.endpoint}('Invoice','{purchase_order_no}')/Microsoft.NAV.post"
+            )
             purchase_order_lines = self.request_api(
                 "POST", endpoint=post_pi_endpoint, request_data=line, params={}
             )
 
-            self.logger.info(f"purchase_invoice created succesfully with No {purchase_order_no}")
+            self.logger.info(
+                f"purchase_invoice created succesfully with No {purchase_order_no}"
+            )
             return purchase_order_no, True, state_updates
 
 
@@ -275,18 +318,27 @@ class PurchaseInvoices(DynamicOnpremSink):
     """Dynamics-onprem target sink class."""
 
     endpoint = "/purchaseInvoices"
+
     @property
     def name(self):
         return self.stream_name
+
     available_names = ["PurchaseInvoices", "Bills"]
     bills_default = False
+
+    def get_dimension_line(self, custom_field):
+        dimension_line = {
+            "displayName": custom_field.get("name").split("-")[-1],
+            "valueCode": custom_field.get("value")
+        }
+        return dimension_line
 
     def preprocess_record(self, record: dict, context: dict) -> None:
         self.endpoint = self.get_endpoint(record)
         dueDate = None
         if record.get("dueDate"):
             dueDate = self.convert_date(record.get("dueDate"))
-        
+
         issueDate = None
         if record.get("issueDate"):
             issueDate = self.convert_date(record.get("issueDate"))
@@ -297,31 +349,48 @@ class PurchaseInvoices(DynamicOnpremSink):
             "vendorNumber": record.get("vendorId"),
             "totalAmountIncludingTax": record.get("totalAmount"),
             "currency": record.get("currency"),
-            "purchaseInvoiceLines": []
+            "purchaseInvoiceLines": [],
         }
         # map purchase order custom fields
         po_custom_fields = record.get("customFields")
         if po_custom_fields:
-            [purchase_order_map.update({cf.get("name"): cf.get("value")}) for cf in po_custom_fields]
-        
+            [
+                purchase_order_map.update({cf.get("name"): cf.get("value")})
+                for cf in po_custom_fields
+            ]
+
         # map lines
         pi_lines = record.get("lineItems")
         if isinstance(pi_lines, str):
             pi_lines = self.parse_objs(pi_lines)
         for line in pi_lines:
-            type = "Account" if line.get("accountNumber") else "Item" if line.get("productNumber") else None
+            type = (
+                "Account"
+                if line.get("accountNumber")
+                else "Item"
+                if line.get("productNumber")
+                else None
+            )
             line_map = {
                 "lineType": type,
-                "lineObjectNumber": line.get("accountNumber", line.get("productNumber")),
+                "lineObjectNumber": line.get(
+                    "accountNumber", line.get("productNumber")
+                ),
                 "description": line.get("description"),
                 "quantity": line.get("quantity", 1),
                 "taxCode": line.get("taxCode"),
                 "amountIncludingTax": line.get("unitPrice", line.get("totalPrice")),
+                "dimensionSetLines": []
             }
 
             custom_fields = line.get("customFields")
             if custom_fields:
-                [line_map.update({cf.get("name"): cf.get("value")}) for cf in custom_fields]
+                [
+                    line_map.update({cf.get("name"): cf.get("value")})
+                    if cf.get("name").startswith("DSL")
+                    else line_map["dimensionSetLines"].append(self.get_dimension_line(cf))
+                    for cf in custom_fields
+                ]
 
             purchase_order_map["purchaseInvoiceLines"].append(line_map)
 
@@ -335,17 +404,25 @@ class PurchaseInvoices(DynamicOnpremSink):
             lines = record.pop("purchaseInvoiceLines", None)
             if lines:
                 purchase_order = self.request_api(
-                    "POST", endpoint=self.endpoint, request_data=record, params=self.params
+                    "POST",
+                    endpoint=self.endpoint,
+                    request_data=record,
+                    params=self.params,
                 )
                 purchase_order = purchase_order.json()
                 purchase_order_id = purchase_order.get("id")
                 if purchase_order and purchase_order_id:
-                    pol_endpoint = f"{self.endpoint}({purchase_order_id})/purchaseInvoiceLines"
+                    pol_endpoint = (
+                        f"{self.endpoint}({purchase_order_id})/purchaseInvoiceLines"
+                    )
                     self.logger.info("Posting purchase invoice lines")
                     for line in lines:
                         try:
                             purchase_order_lines = self.request_api(
-                                "POST", endpoint=pol_endpoint, request_data=line, params=self.params
+                                "POST",
+                                endpoint=pol_endpoint,
+                                request_data=line,
+                                params=self.params,
                             )
                         except Exception as e:
                             self.logger.info(f"Posting line {line} has failed")
@@ -354,8 +431,13 @@ class PurchaseInvoices(DynamicOnpremSink):
                             purchase_order_lines = self.request_api(
                                 "DELETE", endpoint=delete_endpoint
                             )
-                            error = {"error": e, "notes": "due to error during posting lines the purchase invoice header was deleted"}
+                            error = {
+                                "error": e,
+                                "notes": "due to error during posting lines the purchase invoice header was deleted",
+                            }
                             raise Exception(error)
 
-                self.logger.info(f"purchase_invoice created succesfully with No {purchase_order_id}")
+                self.logger.info(
+                    f"purchase_invoice created succesfully with No {purchase_order_id}"
+                )
                 return purchase_order_id, True, state_updates
