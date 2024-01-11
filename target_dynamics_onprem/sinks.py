@@ -172,7 +172,7 @@ class PurchaseDocuments(DynamicOnpremSink):
             self.logger.info(f"purchase_order created succesfully with Id {purchase_order_id}")
             return purchase_order_id, True, state_updates
 
-class PurchaseInvoice(DynamicOnpremSink):
+class Purchase_Invoice(DynamicOnpremSink):
     """Dynamics-onprem target sink class."""
 
     endpoint = "/Purchase_Invoice"
@@ -271,7 +271,7 @@ class PurchaseInvoice(DynamicOnpremSink):
             return purchase_order_no, True, state_updates
 
 
-class PurchaseInvoice(DynamicOnpremSink):
+class PurchaseInvoices(DynamicOnpremSink):
     """Dynamics-onprem target sink class."""
 
     endpoint = "/purchaseInvoices"
@@ -332,8 +332,6 @@ class PurchaseInvoice(DynamicOnpremSink):
     def upsert_record(self, record: dict, context: dict):
         state_updates = dict()
         if record:
-            #testing get endpoint
-            self.logger.info("TESTING GET REQUEST TO LATEST ENDPOINT")
             lines = record.pop("purchaseInvoiceLines", None)
             if lines:
                 purchase_order = self.request_api(
