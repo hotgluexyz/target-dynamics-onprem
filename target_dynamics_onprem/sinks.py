@@ -328,7 +328,6 @@ class PurchaseInvoices(DynamicOnpremSink):
 
     def get_dimension_line(self, custom_field):
         dimension_line = {
-            "displayName": custom_field.get("name").split("-")[-1],
             "valueCode": custom_field.get("value")
         }
         return dimension_line
