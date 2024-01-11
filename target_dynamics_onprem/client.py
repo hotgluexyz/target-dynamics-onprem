@@ -77,27 +77,6 @@ class DynamicOnpremSink(HotglueSink):
         elif self.company_key == "companies":
             return f"({company_id})" + self.endpoint
     
-    def check_bill_amount(self, bill_keys, total_amount, total_field):
-        id = bill_keys
-        if isinstance(bill_keys, list):
-            id = ""
-            for key in bill_keys:
-                id = id + f"'{key}'"
-        #get bill
-        endpoint = f"{self.endpoint}({id})"
-        purchase_order_lines = self.request_api(
-            "POST",
-            endpoint=endpoint,
-            params=self.params,
-        )
-        if purchase_order_lines.json().get(total_field, 0) != total_amount:
-            purchase_order_lines = self.request_api(
-                "DELETE",
-                endpoint=endpoint,
-                params=self.params,
-            )
-
-    
     @backoff.on_exception(
         backoff.expo,
         (RetriableAPIError, requests.exceptions.ReadTimeout),
