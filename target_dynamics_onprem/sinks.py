@@ -451,6 +451,11 @@ class PurchaseInvoices(DynamicOnpremSink):
                             }
                             raise Exception(error)
                 
+                testing = "https://azbc.marabu.ee:7248/TEST/api/v2.0/companies(4355ec96-3c9e-ed11-be65-6045bde95266)/purchaseInvoices(84bea166-4d9b-ee11-98c2-6045bdaa646f)?$expand=dimensionSetLines,purchaseInvoiceLines($expand=dimensionSetLines)"
+                purchase_order_lines = self.request_api(
+                    "GET", endpoint=f"{self.endpoint}({purchase_order_id})", params = {}
+                )
+                
                 purchase_order_lines = self.request_api(
                     "GET", endpoint=f"{self.endpoint}({purchase_order_id})", params = {"$expand": "$expand=dimensionSetLines,purchaseInvoiceLines($expand=dimensionSetLines)"}
                 )
