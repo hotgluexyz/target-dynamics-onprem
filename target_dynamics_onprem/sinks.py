@@ -334,6 +334,7 @@ class PurchaseInvoices(DynamicOnpremSink):
         return dimension_line
 
     def preprocess_record(self, record: dict, context: dict) -> None:
+        self.logger.info(f"CREATING PAYLOAD")
         self.endpoint = self.get_endpoint(record)
         dueDate = None
         if record.get("dueDate"):
@@ -386,16 +387,16 @@ class PurchaseInvoices(DynamicOnpremSink):
             custom_fields = line.get("customFields")
             if custom_fields:
                 [
-                    line_map.update({cf.get("name"): cf.get("value")})
+                    line_map["dimensionSetLines"].append(self.get_dimension_line(cf))
                     if cf.get("name").startswith("DSL")
-                    else line_map["dimensionSetLines"].append(self.get_dimension_line(cf))
+                    else line_map.update({cf.get("name"): cf.get("value")})
                     for cf in custom_fields
                 ]
 
             purchase_order_map["purchaseInvoiceLines"].append(line_map)
 
         mapping = self.clean_convert(purchase_order_map)
-
+        self.logger.info(f"PAYLOAD {mapping}")
         return mapping
 
     def upsert_record(self, record: dict, context: dict):
