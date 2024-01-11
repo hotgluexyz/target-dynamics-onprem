@@ -418,6 +418,7 @@ class PurchaseInvoices(DynamicOnpremSink):
                     )
                     self.logger.info("Posting purchase invoice lines")
                     for line in lines:
+                        dimension_set_lines = line.pop("dimensionSetLines", [])
                         try:
                             purchase_order_lines = self.request_api(
                                 "POST",
@@ -425,6 +426,18 @@ class PurchaseInvoices(DynamicOnpremSink):
                                 request_data=line,
                                 params=self.params,
                             )
+                            pol_id = purchase_order_lines.json()
+                            #set dimension lines
+                            sdl_endpoint = f"{pol_endpoint}({pol_id})/dimensionSetLines"
+                            self.logger.info(f"SDL ENDPOINTTT {sdl_endpoint}")
+                            for sdl in dimension_set_lines:
+                                purchase_order_lines = self.request_api(
+                                    "POST",
+                                    endpoint=sdl_endpoint,
+                                    request_data=sdl,
+                                    params=self.params,
+                                )
+
                         except Exception as e:
                             self.logger.info(f"Posting line {line} has failed")
                             self.logger.info("Deleting purchase order header")
