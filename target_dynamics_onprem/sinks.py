@@ -450,6 +450,10 @@ class PurchaseInvoices(DynamicOnpremSink):
                                 "notes": "due to error during posting lines the purchase invoice header was deleted",
                             }
                             raise Exception(error)
+                
+                purchase_order_lines = self.request_api(
+                    "GET", endpoint=f"{self.endpoint}({purchase_order_id})", params = {"$expand": "$expand=dimensionSetLines,purchaseInvoiceLines($expand=dimensionSetLines)"}
+                )
 
                 self.logger.info(
                     f"purchase_invoice created succesfully with No {purchase_order_id}"
