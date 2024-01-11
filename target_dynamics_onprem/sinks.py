@@ -334,17 +334,6 @@ class PurchaseInvoices(DynamicOnpremSink):
         return dimension_line
 
     def preprocess_record(self, record: dict, context: dict) -> None:
-        self.logger.info("TESTING DIMENSION LINES")
-        testing = "https://azbc.marabu.ee:7248/TEST/api/v2.0/companies(4355ec96-3c9e-ed11-be65-6045bde95266)/purchaseInvoices(84bea166-4d9b-ee11-98c2-6045bdaa646f)?$expand=dimensionSetLines,purchaseInvoiceLines($expand=dimensionSetLines)"
-        purchase_order_lines = self.request_api(
-            "GET", endpoint=testing, params = {}
-        )
-        testing = "https://azbc.marabu.ee:7248/TEST/api/v2.0/companies(4355ec96-3c9e-ed11-be65-6045bde95266)/purchaseInvoices(b6ae0725-ccb0-ee11-98c2-6045bdaa646f)?$expand=dimensionSetLines,purchaseInvoiceLines($expand=dimensionSetLines)"
-        purchase_order_lines = self.request_api(
-            "GET", endpoint=testing, params = {}
-        )
-
-        raise Exception(e)
         self.logger.info(f"CREATING PAYLOAD")
         self.endpoint = self.get_endpoint(record)
         dueDate = None
@@ -462,10 +451,6 @@ class PurchaseInvoices(DynamicOnpremSink):
                             }
                             raise Exception(error)
                 
-                purchase_order_lines = self.request_api(
-                    "GET", endpoint=f"{self.endpoint}({purchase_order_id})", params = {"$expand": "$expand=dimensionSetLines,purchaseInvoiceLines($expand=dimensionSetLines)"}
-                )
-
                 self.logger.info(
                     f"purchase_invoice created succesfully with No {purchase_order_id}"
                 )
