@@ -111,11 +111,8 @@ class PurchaseDocuments(DynamicOnpremSink):
             "balAccountType": record.get("accountName"),
         }
         po_custom_fields = record.get("customFields")
-        if po_custom_fields:
-            [
-                purchase_order_map.update({cf.get("name"): cf.get("value")})
-                for cf in po_custom_fields
-            ]
+        purchase_order_map.update(self.process_custom_fields(po_custom_fields))
+
         lines = []
         # add correlative line number
         line_number = 0
@@ -140,11 +137,7 @@ class PurchaseDocuments(DynamicOnpremSink):
             line_number = line_number + 1
             # map custom fields
             custom_fields = line.get("customFields")
-            if custom_fields:
-                [
-                    line_map.update({cf.get("name"): cf.get("value")})
-                    for cf in custom_fields
-                ]
+            line_map.update(self.process_custom_fields(custom_fields))
             lines.append(line_map)
 
         payload = {"purchase_order": purchase_order_map, "lines": lines}
@@ -218,11 +211,7 @@ class Purchase_Invoice(DynamicOnpremSink):
         }
         # map purchase order custom fields
         po_custom_fields = record.get("customFields")
-        if po_custom_fields:
-            [
-                purchase_order_map.update({cf.get("name"): cf.get("value")})
-                for cf in po_custom_fields
-            ]
+        purchase_order_map.update(self.process_custom_fields(po_custom_fields))
 
         # map lines
         lines = []
@@ -247,12 +236,7 @@ class Purchase_Invoice(DynamicOnpremSink):
             }
 
             custom_fields = line.get("customFields")
-            if custom_fields:
-                [
-                    line_map.update({cf.get("name"): cf.get("value")})
-                    for cf in custom_fields
-                ]
-
+            line_map.update(self.process_custom_fields(custom_fields))
             lines.append(line_map)
 
         payload = {"purchase_invoice": purchase_order_map, "lines": lines}
@@ -354,11 +338,7 @@ class PurchaseInvoices(DynamicOnpremSink):
         }
         # map purchase order custom fields
         po_custom_fields = record.get("customFields")
-        if po_custom_fields:
-            [
-                purchase_order_map.update({cf.get("name"): cf.get("value")})
-                for cf in po_custom_fields
-            ]
+        purchase_order_map.update(self.process_custom_fields(po_custom_fields))
 
         # map lines
         pi_lines = record.get("lineItems")

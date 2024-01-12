@@ -126,3 +126,15 @@ class DynamicOnpremSink(HotglueSink):
         except:
             return obj
     
+    def process_custom_fields(self, custom_fields):
+        output = {}
+        if isinstance(custom_fields, str):
+            custom_fields = self.parse_objs(custom_fields)
+        
+        if custom_fields:
+            [
+                output.update({cf.get("name"): cf.get("value")})
+                for cf in custom_fields
+            ]
+        return output
+    
