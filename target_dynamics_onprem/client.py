@@ -73,7 +73,7 @@ class DynamicOnpremSink(HotglueSink):
     def get_endpoint(self, record):
         #use subsidiary as company if passed, else use company from config
         company_id = record.get("subsidiary") or self.config.get("company_id")
-        company_id = quote(company_id)
+        company_id = company_id.replace("'", '"')
 
         if self.company_key == "Company":
             return f"('{company_id}')" + self.endpoint
