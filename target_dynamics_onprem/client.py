@@ -9,6 +9,7 @@ from singer_sdk.exceptions import RetriableAPIError
 from target_hotglue.common import HGJSONEncoder
 from datetime import datetime
 import ast
+from urllib.parse import quote
 
 
 class DynamicOnpremSink(HotglueSink):
@@ -72,6 +73,8 @@ class DynamicOnpremSink(HotglueSink):
     def get_endpoint(self, record):
         #use subsidiary as company if passed, else use company from config
         company_id = record.get("subsidiary") or self.config.get("company_id")
+        company_id = quote(company_id)
+
         if self.company_key == "Company":
             return f"('{company_id}')" + self.endpoint
         elif self.company_key == "companies":
