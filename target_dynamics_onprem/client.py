@@ -9,7 +9,6 @@ from singer_sdk.exceptions import RetriableAPIError
 from target_hotglue.common import HGJSONEncoder
 from datetime import datetime
 import ast
-from urllib.parse import quote
 
 
 class DynamicOnpremSink(HotglueSink):
@@ -42,8 +41,6 @@ class DynamicOnpremSink(HotglueSink):
     def http_headers(self):
         return {}
     
-    companies = None
-    
     params = {"$format": "json"}
     
     def clean_convert(self, input):
@@ -73,21 +70,11 @@ class DynamicOnpremSink(HotglueSink):
         return resp
     
     def get_endpoint(self, record):
-        # del
-        res = self.request_api("DELETE", "(4355ec96-3c9e-ed11-be65-6045bde95266)/purchaseInvoices(658c839c-9cbb-ee11-98c2-6045bdaa646f)")
-
-        if not self.companies:
-            companies = {}
-            res = self.request_api("GET", "/")
-            res = res.json().get("value")
-            [companies.update({c["Name"]: c["Id"]}) for c in res]
-            self.companies = companies
         #use subsidiary as company if passed, else use company from config
-        company= record.get("subsidiary") or self.config.get("company_id")
-        company_id = self.companies.get(company) or company
-
+        company_id = record.get("subsidiary") or self.config.get("company_id")
+        
         if self.company_key == "Company":
-            return f"({company_id})" + self.endpoint
+            return f"('{company_id}')" + self.endpoint
         elif self.company_key == "companies":
             return f"({company_id})" + self.endpoint
     
