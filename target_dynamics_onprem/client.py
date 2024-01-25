@@ -74,7 +74,7 @@ class DynamicOnpremSink(HotglueSink):
         company_id = record.get("subsidiary") or self.config.get("company_id")
         company_id = company_id.replace("'", "''")
         
-        self.request_api("GET", f"Company('{company_id}'){self.endpoint}")
+        self.request_api("GET", f"('{company_id}'){self.endpoint}")
         if self.company_key == "Company":
             return f"('{company_id}')" + self.endpoint
         elif self.company_key == "companies":
