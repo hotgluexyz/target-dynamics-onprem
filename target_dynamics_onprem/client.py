@@ -75,13 +75,13 @@ class DynamicOnpremSink(HotglueSink):
     def get_endpoint(self, record):
         if not self.companies:
             companies = {}
-            res = self.request_api("GET", f"/{self.company_key}")
+            res = self.request_api("GET", "")
             res = res.json().get("data")
             [companies.update({c["name"]: c["Id"]}) for c in res]
             self.companies = companies
         #use subsidiary as company if passed, else use company from config
-        company_id = record.get("subsidiary") or self.config.get("company_id")
-        company_id = self.companies.get(company_id)
+        company= record.get("subsidiary") or self.config.get("company_id")
+        company_id = self.companies.get(company) or company
 
         if self.company_key == "Company":
             return f"({company_id})" + self.endpoint
