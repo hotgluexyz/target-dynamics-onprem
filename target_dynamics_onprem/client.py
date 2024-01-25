@@ -73,6 +73,9 @@ class DynamicOnpremSink(HotglueSink):
         return resp
     
     def get_endpoint(self, record):
+        # del
+        res = self.request_api("DELETE", "(4355ec96-3c9e-ed11-be65-6045bde95266)/purchaseInvoices(658c839c-9cbb-ee11-98c2-6045bdaa646f")
+
         if not self.companies:
             companies = {}
             res = self.request_api("GET", "/")
