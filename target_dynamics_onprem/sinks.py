@@ -194,6 +194,8 @@ class Purchase_Invoice(DynamicOnpremSink):
 
     def preprocess_record(self, record: dict, context: dict) -> None:
         self.endpoint = self.get_endpoint(record)
+        # test url encoding:
+        self.request_api("GET", self.endpoint)
         dueDate = None
         if record.get("dueDate"):
             dueDate = self.convert_date(record.get("dueDate"))
@@ -246,49 +248,49 @@ class Purchase_Invoice(DynamicOnpremSink):
 
     def upsert_record(self, record: dict, context: dict):
         state_updates = dict()
-        if record:
-            purchase_order = self.request_api(
-                "POST",
-                endpoint=self.endpoint,
-                request_data=record.get("purchase_invoice"),
-                params=self.params,
-            )
-            purchase_order = purchase_order.json()
-            purchase_order_no = purchase_order.get("No")
-            if purchase_order and purchase_order_no:
-                pol_endpoint = (
-                    self.endpoint.split("/")[0] + "/Purchase_InvoicePurchLines"
-                )
-                self.logger.info("Posting purchase invoice lines")
-                for line in record.get("lines"):
-                    line["Document_Type"] = "Invoice"
-                    line["Document_No"] = purchase_order_no
-                    try:
-                        purchase_order_lines = self.request_api(
-                            "POST",
-                            endpoint=pol_endpoint,
-                            request_data=line,
-                            params=self.params,
-                        )
-                    except Exception as e:
-                        self.logger.info(f"Posting line {line} has failed")
-                        self.logger.info("Deleting purchase order header")
-                        delete_endpoint = (
-                            f"{self.endpoint}('Invoice','{purchase_order_no}')"
-                        )
-                        purchase_order_lines = self.request_api(
-                            "DELETE", endpoint=delete_endpoint
-                        )
-                        error = {
-                            "error": e,
-                            "notes": "due to error during posting lines the purchase invoice header was deleted",
-                        }
-                        raise Exception(error)
+        # if record:
+        #     purchase_order = self.request_api(
+        #         "POST",
+        #         endpoint=self.endpoint,
+        #         request_data=record.get("purchase_invoice"),
+        #         params=self.params,
+        #     )
+        #     purchase_order = purchase_order.json()
+        #     purchase_order_no = purchase_order.get("No")
+        #     if purchase_order and purchase_order_no:
+        #         pol_endpoint = (
+        #             self.endpoint.split("/")[0] + "/Purchase_InvoicePurchLines"
+        #         )
+        #         self.logger.info("Posting purchase invoice lines")
+        #         for line in record.get("lines"):
+        #             line["Document_Type"] = "Invoice"
+        #             line["Document_No"] = purchase_order_no
+        #             try:
+        #                 purchase_order_lines = self.request_api(
+        #                     "POST",
+        #                     endpoint=pol_endpoint,
+        #                     request_data=line,
+        #                     params=self.params,
+        #                 )
+        #             except Exception as e:
+        #                 self.logger.info(f"Posting line {line} has failed")
+        #                 self.logger.info("Deleting purchase order header")
+        #                 delete_endpoint = (
+        #                     f"{self.endpoint}('Invoice','{purchase_order_no}')"
+        #                 )
+        #                 purchase_order_lines = self.request_api(
+        #                     "DELETE", endpoint=delete_endpoint
+        #                 )
+        #                 error = {
+        #                     "error": e,
+        #                     "notes": "due to error during posting lines the purchase invoice header was deleted",
+        #                 }
+        #                 raise Exception(error)
 
-            self.logger.info(
-                f"purchase_invoice created succesfully with No {purchase_order_no}"
-            )
-            return purchase_order_no, True, state_updates
+        #     self.logger.info(
+        #         f"purchase_invoice created succesfully with No {purchase_order_no}"
+        #     )
+        #     return purchase_order_no, True, state_updates
 
 
 class PurchaseInvoices(DynamicOnpremSink):
