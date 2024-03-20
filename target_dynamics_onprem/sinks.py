@@ -384,63 +384,61 @@ class PurchaseInvoices(DynamicOnpremSink):
 
     def upsert_record(self, record: dict, context: dict):
         state_updates = dict()
-        purchase_order_id = "3afc9f52-f7e6-ee11-98c3-6045bdaa646f"
-        self.upload_attachments(record.get("attachments"), purchase_order_id, self.attachments_endpoint)
         if record:
-            # lines = record.pop("purchaseInvoiceLines", None)
-            # attachments = record.pop("attachments")
-            # if lines:
-            #     purchase_order = self.request_api(
-            #         "POST",
-            #         endpoint=self.endpoint,
-            #         request_data=record,
-            #         params=self.params,
-            #     )
-            #     purchase_order = purchase_order.json()
-            #     purchase_order_id = purchase_order.get("id")
-            #     if purchase_order and purchase_order_id:
-            #         pol_endpoint = (
-            #             f"{self.endpoint}({purchase_order_id})/purchaseInvoiceLines"
-            #         )
-            #         self.logger.info("Posting purchase invoice lines")
-            #         for line in lines:
-            #             dimension_set_lines = line.pop("dimensionSetLines", [])
-            #             try:
-            #                 purchase_order_lines = self.request_api(
-            #                     "POST",
-            #                     endpoint=pol_endpoint,
-            #                     request_data=line,
-            #                     params=self.params,
-            #                 )
-            #                 pol_id = purchase_order_lines.json().get("id")
-            #                 #set dimension lines
-            #                 for sdl in dimension_set_lines:
-            #                     sdl_endpoint = f"{pol_endpoint}({pol_id})/dimensionSetLines"
-            #                     self.logger.info(f"ENDPOINT FOR SDL {sdl_endpoint}")
-            #                     purchase_order_lines = self.request_api(
-            #                         "POST",
-            #                         endpoint=sdl_endpoint,
-            #                         request_data=sdl,
-            #                         params=self.params,
-            #                     )
+            lines = record.pop("purchaseInvoiceLines", None)
+            attachments = record.pop("attachments")
+            if lines:
+                purchase_order = self.request_api(
+                    "POST",
+                    endpoint=self.endpoint,
+                    request_data=record,
+                    params=self.params,
+                )
+                purchase_order = purchase_order.json()
+                purchase_order_id = purchase_order.get("id")
+                if purchase_order and purchase_order_id:
+                    pol_endpoint = (
+                        f"{self.endpoint}({purchase_order_id})/purchaseInvoiceLines"
+                    )
+                    self.logger.info("Posting purchase invoice lines")
+                    for line in lines:
+                        dimension_set_lines = line.pop("dimensionSetLines", [])
+                        try:
+                            purchase_order_lines = self.request_api(
+                                "POST",
+                                endpoint=pol_endpoint,
+                                request_data=line,
+                                params=self.params,
+                            )
+                            pol_id = purchase_order_lines.json().get("id")
+                            #set dimension lines
+                            for sdl in dimension_set_lines:
+                                sdl_endpoint = f"{pol_endpoint}({pol_id})/dimensionSetLines"
+                                self.logger.info(f"ENDPOINT FOR SDL {sdl_endpoint}")
+                                purchase_order_lines = self.request_api(
+                                    "POST",
+                                    endpoint=sdl_endpoint,
+                                    request_data=sdl,
+                                    params=self.params,
+                                )
 
-            #             except Exception as e:
-            #                 self.logger.info(f"Posting line {line} has failed")
-            #                 self.logger.info("Deleting purchase order header")
-            #                 delete_endpoint = f"{self.endpoint}({purchase_order_id})"
-            #                 purchase_order_lines = self.request_api(
-            #                     "DELETE", endpoint=delete_endpoint
-            #                 )
-            #                 error = {
-            #                     "error": e,
-            #                     "notes": "due to error during posting lines the purchase invoice header was deleted",
-            #                 }
-            #                 raise Exception(error)
+                        except Exception as e:
+                            self.logger.info(f"Posting line {line} has failed")
+                            self.logger.info("Deleting purchase order header")
+                            delete_endpoint = f"{self.endpoint}({purchase_order_id})"
+                            purchase_order_lines = self.request_api(
+                                "DELETE", endpoint=delete_endpoint
+                            )
+                            error = {
+                                "error": e,
+                                "notes": "due to error during posting lines the purchase invoice header was deleted",
+                            }
+                            raise Exception(error)
 
-            #         # process attachments
-            #         self.upload_attachments(attachments, purchase_order_id, self.attachments_endpoint)
+                    # process attachments
+                    self.upload_attachments(attachments, purchase_order_id, self.attachments_endpoint)
 
-            #     self.logger.info(
-            #         f"purchase_invoice created succesfully with No {purchase_order_id}"
-            #     )
+                self.logger.info(
+                    f"purchase_invoice created succesfully with No {purchase_order_id}"
+                )
                 return purchase_order_id, True, state_updates
