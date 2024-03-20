@@ -158,26 +158,27 @@ class DynamicOnpremSink(HotglueSink):
                 "parentId": parent_id
             }
 
-            # fetch data from if there is no content
-            if not content:
-                if url:
-                    response = requests.get(url)
-                    data = base64.b64encode(response.content)
-                    data = data.decode()
-                    att_payload["attachmentContent"] = data
-                else:
-                    att_path = f"{self.config.get('input_path')}/{attachment.get('id')}_{att_name}"
-                    with open(att_path, "rb") as attach_file:
-                        data = base64.b64encode(attach_file.read()).decode()
-                        att_payload["attachmentContent"] = data
-            else:
-                att_payload["attachmentContent"] = attachment.get("content")
+            # # fetch data from if there is no content
+            # if not content:
+            #     if url:
+            #         response = requests.get(url)
+            #         data = base64.b64encode(response.content)
+            #         data = data.decode()
+            #         att_payload["attachmentContent"] = data
+            #     else:
+            #         att_path = f"{self.config.get('input_path')}/{attachment.get('id')}_{att_name}"
+            #         with open(att_path, "rb") as attach_file:
+            #             data = base64.b64encode(attach_file.read()).decode()
+            #             att_payload["attachmentContent"] = data
+            # else:
+            #     att_payload["attachmentContent"] = attachment.get("content")
 
             # post attachments
             att = self.request_api(
                 "POST",
                 endpoint=endpoint,
                 request_data=att_payload,
+                headers={"If-Match": "*"}
             )
             self.logger.info(f"Attachment for parent {parent_id} posted succesfully with id {att.json().get('id')}")
     
