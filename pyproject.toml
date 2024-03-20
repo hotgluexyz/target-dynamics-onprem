@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "target-dynamics-onprem"
-version = "0.0.9"
+version = "0.0.1"
 description = "`target-dynamics-onprem` is a Singer target for Montapackingv2, built with the Meltano SDK for Singer Targets."
 authors = ["Hotglue"]
 keywords = [
@@ -37,4 +37,4 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 # CLI declaration
-target-dynamicsonprem-sandbox = 'target_dynamics_onprem.target:TargetDynamicsOnprem.cli'
+target-dynamicsonprem = 'target_dynamics_onprem.target:TargetDynamicsOnprem.cli'
