@@ -77,7 +77,7 @@ class DynamicOnpremSink(HotglueSink):
         # escape apostrophe
         company_id = company_id.replace("'", "''")
         endpoint = endpoint or self.endpoint
-        
+
         if self.company_key == "Company":
             return f"('{company_id}')" + endpoint
         elif self.company_key == "companies":
@@ -137,6 +137,7 @@ class DynamicOnpremSink(HotglueSink):
                 for cf in custom_fields
             ]
         return output
+
     
     def upload_attachments(self, attachments, parent_id, endpoint, parent_type):
         if isinstance(attachments, str):
@@ -182,4 +183,5 @@ class DynamicOnpremSink(HotglueSink):
                     headers={"If-Match": "*"}
                 )
                 self.logger.info(f"Attachment for parent {parent_id} posted succesfully with id {att_id}")
+
     

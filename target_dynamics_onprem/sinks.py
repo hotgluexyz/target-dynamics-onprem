@@ -293,6 +293,7 @@ class Purchase_Invoice(DynamicOnpremSink):
                 # post attachments
                 self.upload_attachments(record.get("attachments"), purchase_order_id, self.attachments_endpoint, "Purchase_x0020_Invoice")
 
+
             self.logger.info(
                 f"purchase_invoice created succesfully with No {purchase_order_no}"
             )
