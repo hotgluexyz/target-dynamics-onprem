@@ -144,7 +144,7 @@ class DynamicOnpremSink(HotglueSink):
             ]
         return output
     
-    def upload_attachments(self, attachments, parent_id, endpoint):
+    def upload_attachments(self, attachments, parent_id, endpoint, parent_type):
         if isinstance(attachments, str):
             attachments = self.parse_objs(attachments)
         for attachment in attachments:
@@ -155,7 +155,8 @@ class DynamicOnpremSink(HotglueSink):
             # make att payload
             att_payload = {
                 "fileName": att_name,
-                "parentId": parent_id
+                "parentId": parent_id,
+                "parentType": parent_type
             }
 
             # fetch data from if there is no content
