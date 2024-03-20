@@ -241,7 +241,7 @@ class Purchase_Invoice(DynamicOnpremSink):
             line_map.update(self.process_custom_fields(custom_fields))
             lines.append(line_map)
 
-        payload = {"purchase_invoice": purchase_order_map, "lines": lines}
+        payload = {"purchase_invoice": purchase_order_map, "lines": lines, "attachments": record.get("attachments") or []}
         mapping = self.clean_convert(payload)
 
         return mapping
@@ -257,6 +257,7 @@ class Purchase_Invoice(DynamicOnpremSink):
             )
             purchase_order = purchase_order.json()
             purchase_order_no = purchase_order.get("No")
+            purchase_order_id = purchase_order.get("Id")
             if purchase_order and purchase_order_no:
                 pol_endpoint = (
                     self.endpoint.split("/")[0] + "/Purchase_InvoicePurchLines"
@@ -286,6 +287,9 @@ class Purchase_Invoice(DynamicOnpremSink):
                             "notes": "due to error during posting lines the purchase invoice header was deleted",
                         }
                         raise Exception(error)
+            
+                # post attachments
+                self.upload_attachments(self, record.get("attachments"), purchase_order_id)
 
             self.logger.info(
                 f"purchase_invoice created succesfully with No {purchase_order_no}"
@@ -330,6 +334,7 @@ class PurchaseInvoices(DynamicOnpremSink):
             "totalAmountIncludingTax": record.get("totalAmount"),
             "currency": record.get("currency"),
             "purchaseInvoiceLines": [],
+            "attachments": record.get("attachments") or []
         }
         # map purchase order custom fields
         po_custom_fields = record.get("customFields")
@@ -378,6 +383,7 @@ class PurchaseInvoices(DynamicOnpremSink):
         state_updates = dict()
         if record:
             lines = record.pop("purchaseInvoiceLines", None)
+            attachments = record.pop("attachments")
             if lines:
                 purchase_order = self.request_api(
                     "POST",
@@ -425,7 +431,10 @@ class PurchaseInvoices(DynamicOnpremSink):
                                 "notes": "due to error during posting lines the purchase invoice header was deleted",
                             }
                             raise Exception(error)
-                
+
+                    # process attachments
+                    self.upload_attachments(self, attachments, purchase_order_id)
+
                 self.logger.info(
                     f"purchase_invoice created succesfully with No {purchase_order_id}"
                 )

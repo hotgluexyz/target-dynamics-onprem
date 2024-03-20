@@ -9,6 +9,8 @@ from singer_sdk.exceptions import RetriableAPIError
 from target_hotglue.common import HGJSONEncoder
 from datetime import datetime
 import ast
+import requests
+import base64
 
 
 class DynamicOnpremSink(HotglueSink):
@@ -139,4 +141,39 @@ class DynamicOnpremSink(HotglueSink):
                 for cf in custom_fields
             ]
         return output
+    
+    def upload_attachments(self, attachments, parent_id):
+        for attachment in attachments:
+            att_name = attachment.get("name")
+            url = attachment.get("url")
+            content = attachment.get("content")
+
+            # make att payload
+            att_payload = {
+                "fileName": att_name,
+                "parentId": parent_id
+            }
+
+            # fetch data from if there is no content
+            if not content:
+                if url:
+                    response = requests.get(url)
+                    data = base64.b64encode(response.content)
+                    data = data.decode()
+                    att_payload["attachmentContent"] = data
+                else:
+                    att_path = f"{self.config.get('input_path')}/{attachment.get('id')}_{att_name}"
+                    with open(att_path, "rb") as attach_file:
+                        data = base64.b64encode(attach_file.read()).decode()
+                        att_payload["attachmentContent"] = data
+            else:
+                att_payload["attachmentContent"] = attachment.get("content")
+
+            # post attachments
+            att = self.request_api(
+                "POST",
+                endpoint="/attachments",
+                request_data=att_payload,
+            )
+            self.logger.info(f"Attachment for parent {parent_id} posted succesfully with id {att.json().get('id')}")
     
