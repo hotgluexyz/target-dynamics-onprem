@@ -71,15 +71,17 @@ class DynamicOnpremSink(HotglueSink):
         resp = self._request(http_method, endpoint, params=params, headers=headers, request_data=request_data)
         return resp
     
-    def get_endpoint(self, record):
+    def get_endpoint(self, record, endpoint=None):
         #use subsidiary as company if passed, else use company from config
         company_id = record.get("subsidiary") or self.config.get("company_id")
+        # escape apostrophe
         company_id = company_id.replace("'", "''")
+        endpoint = endpoint or self.endpoint
         
         if self.company_key == "Company":
-            return f"('{company_id}')" + self.endpoint
+            return f"('{company_id}')" + endpoint
         elif self.company_key == "companies":
-            return f"({company_id})" + self.endpoint
+            return f"({company_id})" + endpoint
     
     @backoff.on_exception(
         backoff.expo,
@@ -142,7 +144,7 @@ class DynamicOnpremSink(HotglueSink):
             ]
         return output
     
-    def upload_attachments(self, attachments, parent_id):
+    def upload_attachments(self, attachments, parent_id, endpoint):
         if isinstance(attachments, str):
             attachments = self.parse_objs(attachments)
         for attachment in attachments:
@@ -174,7 +176,7 @@ class DynamicOnpremSink(HotglueSink):
             # post attachments
             att = self.request_api(
                 "POST",
-                endpoint="/attachments",
+                endpoint=endpoint,
                 request_data=att_payload,
             )
             self.logger.info(f"Attachment for parent {parent_id} posted succesfully with id {att.json().get('id')}")

@@ -194,6 +194,8 @@ class Purchase_Invoice(DynamicOnpremSink):
 
     def preprocess_record(self, record: dict, context: dict) -> None:
         self.endpoint = self.get_endpoint(record)
+        # get attachments endpoint
+        self.attachments_endpoint = self.get_endpoint(record, "/attachments")
         # test url encoding:
         self.request_api("GET", self.endpoint)
         dueDate = None
@@ -289,7 +291,7 @@ class Purchase_Invoice(DynamicOnpremSink):
                         raise Exception(error)
             
                 # post attachments
-                self.upload_attachments(record.get("attachments"), purchase_order_id)
+                self.upload_attachments(record.get("attachments"), purchase_order_id, self.attachments_endpoint)
 
             self.logger.info(
                 f"purchase_invoice created succesfully with No {purchase_order_no}"
@@ -319,6 +321,7 @@ class PurchaseInvoices(DynamicOnpremSink):
     def preprocess_record(self, record: dict, context: dict) -> None:
         self.logger.info(f"CREATING PAYLOAD")
         self.endpoint = self.get_endpoint(record)
+        self.attachments_endpoint = self.get_endpoint(record, "/attachments")
         dueDate = None
         if record.get("dueDate"):
             dueDate = self.convert_date(record.get("dueDate"))
@@ -433,7 +436,7 @@ class PurchaseInvoices(DynamicOnpremSink):
                             raise Exception(error)
 
                     # process attachments
-                    self.upload_attachments(attachments, purchase_order_id)
+                    self.upload_attachments(attachments, purchase_order_id, self.attachments_endpoint)
 
                 self.logger.info(
                     f"purchase_invoice created succesfully with No {purchase_order_id}"
