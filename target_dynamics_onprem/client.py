@@ -177,12 +177,11 @@ class DynamicOnpremSink(HotglueSink):
                 "POST",
                 endpoint=endpoint,
                 request_data=att_payload,
-                headers={"If-Match": "*"}
             )
             att_id = att.json().get("id")
             if att_id:
                 att = self.request_api(
-                    "POST",
+                    "PATCH",
                     endpoint=f"{endpoint}({att_id})/attachmentContent",
                     request_data=content_payload,
                     headers={"If-Match": "*"}
