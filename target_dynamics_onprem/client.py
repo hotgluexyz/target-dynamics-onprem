@@ -96,11 +96,6 @@ class DynamicOnpremSink(HotglueSink):
         url = self.url(endpoint)
         headers.update(self.default_headers)
         headers.update({"Content-Type": "application/json"})
-        # data = (
-        #     json.dumps(request_data, cls=HGJSONEncoder)
-        #     if request_data
-        #     else None
-        # )
 
         if self.config.get("basic_auth") == True:
             auth = (self.config.get("username"), self.config.get("password"))
@@ -118,7 +113,6 @@ class DynamicOnpremSink(HotglueSink):
             auth=auth
         )
         self.logger.info("response!!")
-        self.logger.info(response.status_code)
         self.logger.info(f"RESPONSE TEXT {response.text} STATUS CODE {response.status_code}")
         self.validate_response(response)
         return response
