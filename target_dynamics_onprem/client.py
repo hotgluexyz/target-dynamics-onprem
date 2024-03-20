@@ -163,14 +163,14 @@ class DynamicOnpremSink(HotglueSink):
                 if url:
                     response = requests.get(url)
                     data = base64.b64encode(response.content)
-                    att_payload["attachmentContent"] = data
                 else:
                     att_path = f"{self.config.get('input_path')}/{attachment.get('id')}_{att_name}"
                     with open(att_path, "rb") as attach_file:
                         data = base64.b64encode(attach_file.read())
-                        att_payload["attachmentContent"] = data
             else:
-                att_payload["attachmentContent"] = attachment.get("content").encode('utf-8')
+                data = attachment.get("content").encode('utf-8')
+            
+            content_payload = {"attachmentContent": data}
 
             # post attachments
             att = self.request_api(
@@ -179,5 +179,13 @@ class DynamicOnpremSink(HotglueSink):
                 request_data=att_payload,
                 headers={"If-Match": "*"}
             )
+            att_id = att.json().get("id")
+            if att_id:
+                att = self.request_api(
+                    "POST",
+                    endpoint=f"{endpoint}({att_id})/attachmentContent",
+                    request_data=content_payload,
+                    headers={"If-Match": "*"}
+                )
             self.logger.info(f"Attachment for parent {parent_id} posted succesfully with id {att.json().get('id')}")
     
