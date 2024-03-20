@@ -96,11 +96,11 @@ class DynamicOnpremSink(HotglueSink):
         url = self.url(endpoint)
         headers.update(self.default_headers)
         headers.update({"Content-Type": "application/json"})
-        data = (
-            json.dumps(request_data, cls=HGJSONEncoder)
-            if request_data
-            else None
-        )
+        # data = (
+        #     json.dumps(request_data, cls=HGJSONEncoder)
+        #     if request_data
+        #     else None
+        # )
 
         if self.config.get("basic_auth") == True:
             auth = (self.config.get("username"), self.config.get("password"))
@@ -108,13 +108,13 @@ class DynamicOnpremSink(HotglueSink):
             auth = HttpNtlmAuth(self.config.get("username"), self.config.get("password"))        
 
         self.logger.info(f"MAKING {http_method} REQUEST")
-        self.logger.info(f"URL {url} params {params} data {data}")
+        self.logger.info(f"URL {url} params {params} data {request_data}")
         response = requests.request(
             method=http_method,
             url=url,
             params=params,
             headers=headers,
-            data=data,
+            json=request_data,
             auth=auth
         )
         self.logger.info("response!!")
@@ -163,12 +163,11 @@ class DynamicOnpremSink(HotglueSink):
                 if url:
                     response = requests.get(url)
                     data = base64.b64encode(response.content)
-                    data = data.decode()
                     att_payload["attachmentContent"] = data
                 else:
                     att_path = f"{self.config.get('input_path')}/{attachment.get('id')}_{att_name}"
                     with open(att_path, "rb") as attach_file:
-                        data = base64.b64encode(attach_file.read()).decode()
+                        data = base64.b64encode(attach_file.read())
                         att_payload["attachmentContent"] = data
             else:
                 att_payload["attachmentContent"] = attachment.get("content").encode('utf-8')
