@@ -143,6 +143,8 @@ class DynamicOnpremSink(HotglueSink):
         return output
     
     def upload_attachments(self, attachments, parent_id):
+        if isinstance(attachments, str):
+            attachments = self.parse_objs(attachments)
         for attachment in attachments:
             att_name = attachment.get("name")
             url = attachment.get("url")
