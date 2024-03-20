@@ -289,7 +289,7 @@ class Purchase_Invoice(DynamicOnpremSink):
                         raise Exception(error)
             
                 # post attachments
-                self.upload_attachments(self, record.get("attachments"), purchase_order_id)
+                self.upload_attachments(record.get("attachments"), purchase_order_id)
 
             self.logger.info(
                 f"purchase_invoice created succesfully with No {purchase_order_no}"
@@ -433,7 +433,7 @@ class PurchaseInvoices(DynamicOnpremSink):
                             raise Exception(error)
 
                     # process attachments
-                    self.upload_attachments(self, attachments, purchase_order_id)
+                    self.upload_attachments(attachments, purchase_order_id)
 
                 self.logger.info(
                     f"purchase_invoice created succesfully with No {purchase_order_id}"
