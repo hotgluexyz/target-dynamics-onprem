@@ -9,6 +9,8 @@ from singer_sdk.exceptions import RetriableAPIError
 from target_hotglue.common import HGJSONEncoder
 from datetime import datetime
 import ast
+import requests
+import base64
 
 
 class DynamicOnpremSink(HotglueSink):
@@ -69,14 +71,17 @@ class DynamicOnpremSink(HotglueSink):
         resp = self._request(http_method, endpoint, params=params, headers=headers, request_data=request_data)
         return resp
     
-    def get_endpoint(self, record):
+    def get_endpoint(self, record, endpoint=None):
         #use subsidiary as company if passed, else use company from config
         company_id = record.get("subsidiary") or self.config.get("company_id")
+        # escape apostrophe
         company_id = company_id.replace("'", "''")
+        endpoint = endpoint or self.endpoint
+
         if self.company_key == "Company":
-            return f"('{company_id}')" + self.endpoint
+            return f"('{company_id}')" + endpoint
         elif self.company_key == "companies":
-            return f"({company_id})" + self.endpoint
+            return f"({company_id})" + endpoint
     
     @backoff.on_exception(
         backoff.expo,
@@ -91,11 +96,6 @@ class DynamicOnpremSink(HotglueSink):
         url = self.url(endpoint)
         headers.update(self.default_headers)
         headers.update({"Content-Type": "application/json"})
-        data = (
-            json.dumps(request_data, cls=HGJSONEncoder)
-            if request_data
-            else None
-        )
 
         if self.config.get("basic_auth") == True:
             auth = (self.config.get("username"), self.config.get("password"))
@@ -103,17 +103,16 @@ class DynamicOnpremSink(HotglueSink):
             auth = HttpNtlmAuth(self.config.get("username"), self.config.get("password"))        
 
         self.logger.info(f"MAKING {http_method} REQUEST")
-        self.logger.info(f"URL {url} params {params} data {data}")
+        self.logger.info(f"URL {url} params {params} data {request_data}")
         response = requests.request(
             method=http_method,
             url=url,
             params=params,
             headers=headers,
-            data=data,
+            json=request_data,
             auth=auth
         )
         self.logger.info("response!!")
-        self.logger.info(response.status_code)
         self.logger.info(f"RESPONSE TEXT {response.text} STATUS CODE {response.status_code}")
         self.validate_response(response)
         return response
@@ -138,4 +137,51 @@ class DynamicOnpremSink(HotglueSink):
                 for cf in custom_fields
             ]
         return output
+
+    
+    def upload_attachments(self, attachments, parent_id, endpoint, parent_type):
+        if isinstance(attachments, str):
+            attachments = self.parse_objs(attachments)
+        for attachment in attachments:
+            att_name = attachment.get("name")
+            url = attachment.get("url")
+            content = attachment.get("content")
+
+            # make att payload
+            att_payload = {
+                "fileName": att_name,
+                "parentId": parent_id,
+                "parentType": parent_type
+            }
+
+            # fetch data from if there is no content
+            if not content:
+                if url:
+                    response = requests.get(url)
+                    data = base64.b64encode(response.content)
+                else:
+                    att_path = f"{self.config.get('input_path')}/{attachment.get('id')}_{att_name}"
+                    with open(att_path, "rb") as attach_file:
+                        data = base64.b64encode(attach_file.read())
+            else:
+                data = attachment.get("content").encode('utf-8')
+            
+            content_payload = {"attachmentContent": data}
+
+            # post attachments
+            att = self.request_api(
+                "POST",
+                endpoint=endpoint,
+                request_data=att_payload,
+            )
+            att_id = att.json().get("id")
+            if att_id:
+                att = self.request_api(
+                    "PATCH",
+                    endpoint=f"{endpoint}({att_id})/attachmentContent",
+                    request_data=content_payload,
+                    headers={"If-Match": "*"}
+                )
+                self.logger.info(f"Attachment for parent {parent_id} posted succesfully with id {att_id}")
+
     
