@@ -183,6 +183,10 @@ class DynamicOnpremSink(HotglueSink):
                     headers={"If-Match": "*"}
                 )
                 self.logger.info(f"Attachment for parent {parent_id} posted succesfully with id {att_id}")
-                self.logger.info(f"Attachment content {att.json()['attachmentContent']}")
+                att = self.request_api(
+                    "GET",
+                    endpoint=f"{endpoint}({att_id})",
+                )
+                self.logger.info(f"Attachment content {att.text}")
 
     
