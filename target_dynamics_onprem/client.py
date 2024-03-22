@@ -191,8 +191,7 @@ class DynamicOnpremSink(HotglueSink):
                 self.logger.info(f"Attachment content {att.content}")
                 att_path = f"{self.config.get('input_path')}/testing2.pdf"
                 with open(att_path, "wb") as attach_file:
-                    n = attach_file.write(att.content)
-                    n.close()
+                    n = attach_file.write(att.json().get("attachmentContent"))
 
 
 
