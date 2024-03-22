@@ -37,4 +37,4 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 # CLI declaration
-target-dynamicsonprem = 'target_dynamics_onprem.target:TargetDynamicsOnprem.cli'
+target-dynamicsonprem-sandbox = 'target_dynamics_onprem.target:TargetDynamicsOnprem.cli'
