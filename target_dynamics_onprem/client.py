@@ -184,6 +184,4 @@ class DynamicOnpremSink(HotglueSink):
                 )
                 self.logger.info(f"Attachment for parent {parent_id} posted succesfully with id {att_id}")
 
-
-
     
