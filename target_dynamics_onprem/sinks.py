@@ -325,7 +325,7 @@ class PurchaseInvoices(DynamicOnpremSink):
         self.attachments_endpoint = self.get_endpoint(record, "/attachments")
         self.logger.info(f"FETCHING ATTACHMENT")
         att = self.request_api(
-            "GET", endpoint=self.attachments_endpoint, params={"$filter": f"parentId eq cb4e0d1e-3be8-ee11-98c3-6045bdaa646f and parentType eq Purchase_x0020_Invoice"}
+            "GET", endpoint=self.attachments_endpoint, params={"$filter": f"parentId eq cb4e0d1e-3be8-ee11-98c3-6045bdaa646f"}
         )
         self.logger.info(f"WRITING ATTACHMENT")
         xml_file = open(f"{self.config.get('input_path')}/att.json", "w")
