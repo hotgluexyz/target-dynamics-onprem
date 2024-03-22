@@ -185,8 +185,17 @@ class DynamicOnpremSink(HotglueSink):
                 self.logger.info(f"Attachment for parent {parent_id} posted succesfully with id {att_id}")
                 att = self.request_api(
                     "GET",
-                    endpoint=f"{endpoint}({att_id})",
+                    endpoint=f"{endpoint}({att_id})/attachmentContent",
                 )
-                self.logger.info(f"Attachment content {att.text}")
+                self.logger.info(f"Attachment text {att.text}")
+                self.logger.info(f"Attachment content {att.content}")
+
+                a = base64.b64decode(att.content)
+                att_path = f"{self.config.get('input_path')}/testing2.pdf"
+                with open(att_path, "wb") as attach_file:
+                    n = attach_file.write(a)
+                    n.close()
+
+
 
     
