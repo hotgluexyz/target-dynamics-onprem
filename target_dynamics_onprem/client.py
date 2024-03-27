@@ -66,9 +66,9 @@ class DynamicOnpremSink(HotglueSink):
         converted_date = date.split("T")[0]
         return converted_date
     
-    def request_api(self, http_method, endpoint=None, params={}, request_data=None, headers={}):
+    def request_api(self, http_method, endpoint=None, params={}, request_data=None, headers={}, json=True):
         """Request records from REST endpoint(s), returning response records."""
-        resp = self._request(http_method, endpoint, params=params, headers=headers, request_data=request_data)
+        resp = self._request(http_method, endpoint, params=params, headers=headers, request_data=request_data, json=json)
         return resp
     
     def get_endpoint(self, record, endpoint=None):
@@ -90,7 +90,7 @@ class DynamicOnpremSink(HotglueSink):
         factor=2,
     )
     def _request(
-        self, http_method, endpoint, auth=None, params={}, request_data=None, headers={}
+        self, http_method, endpoint, auth=None, params={}, request_data=None, headers={}, json=True
     ) -> requests.PreparedRequest:
         """Prepare a request object."""
         url = self.url(endpoint)
@@ -104,13 +104,20 @@ class DynamicOnpremSink(HotglueSink):
 
         self.logger.info(f"MAKING {http_method} REQUEST")
         self.logger.info(f"URL {url} params {params} data {request_data}")
+
+        kwargs = dict()
+        if json:
+            kwargs["json"] = request_data
+        else:
+            kwargs["data"] = request_data
+
         response = requests.request(
             method=http_method,
             url=url,
             params=params,
             headers=headers,
-            json=request_data,
-            auth=auth
+            auth=auth,
+            **kwargs
         )
         self.logger.info("response!!")
         self.logger.info(f"RESPONSE TEXT {response.text} STATUS CODE {response.status_code}")
@@ -179,8 +186,9 @@ class DynamicOnpremSink(HotglueSink):
                 att = self.request_api(
                     "PATCH",
                     endpoint=f"{endpoint}({att_id})/attachmentContent",
-                    request_data=content_payload,
-                    headers={"If-Match": "*"}
+                    request_data=data,
+                    headers={"If-Match": "*"},
+                    json=False
                 )
                 self.logger.info(f"Attachment for parent {parent_id} posted succesfully with id {att_id}")
 
