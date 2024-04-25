@@ -281,13 +281,18 @@ class Purchase_Invoice(DynamicOnpremSink):
                         delete_endpoint = (
                             f"{self.endpoint}('Invoice','{purchase_order_no}')"
                         )
-                        purchase_order_lines = self.request_api(
-                            "DELETE", endpoint=delete_endpoint
-                        )
                         error = {
                             "error": e,
                             "notes": "due to error during posting lines the purchase invoice header was deleted",
                         }
+
+                        try:
+                            purchase_order_lines = self.request_api(
+                                "DELETE", endpoint=delete_endpoint
+                            )
+                        except Exception as e:
+                            error["deleting_failure"] = f"Deleting purchase invoice has failed due to {e}"
+
                         raise Exception(error)
             
                 # post attachments
@@ -427,13 +432,18 @@ class PurchaseInvoices(DynamicOnpremSink):
                             self.logger.info(f"Posting line {line} has failed")
                             self.logger.info("Deleting purchase order header")
                             delete_endpoint = f"{self.endpoint}({purchase_order_id})"
-                            purchase_order_lines = self.request_api(
-                                "DELETE", endpoint=delete_endpoint
-                            )
                             error = {
                                 "error": e,
                                 "notes": "due to error during posting lines the purchase invoice header was deleted",
                             }
+
+                            try:
+                                purchase_order_lines = self.request_api(
+                                    "DELETE", endpoint=delete_endpoint
+                                )
+                            except Exception as e:
+                                error["deleting_failure"] = f"Deleting purchase invoice has failed due to {e}"
+
                             raise Exception(error)
 
                     # process attachments
