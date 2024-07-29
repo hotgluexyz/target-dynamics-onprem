@@ -172,6 +172,10 @@ class DynamicOnpremSink(HotglueSink):
                         data = base64.b64encode(attach_file.read()).decode()
             else:
                 data = attachment.get("content")
+                try:
+                    data = data.encode()
+                except:
+                    raise Exception(f"Unable to encode attachment {att_name} content")
             
             content_payload = {"attachmentContent": data}
 
