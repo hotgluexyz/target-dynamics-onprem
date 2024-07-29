@@ -325,18 +325,18 @@ class PurchaseInvoices(DynamicOnpremSink):
         return dimension_line
 
     def preprocess_record(self, record: dict, context: dict) -> None:
-        # self.logger.info(f"Fetching attachment data...")
+        self.logger.info(f"Fetching attachment data...")
         # url = "/attachments?$filter=parentId eq 3bf2f72a-cd4d-ef11-98c4-6045bdaa646f and parentType eq 'Purchase_x0020_Invoice'"
-        # url_2 = "/attachments(bccca731-cd4d-ef11-98c4-6045bdaa646f)/attachmentContent"
-        # try: 
-        #     # first_att = self.request_api("GET", self.get_endpoint(record, endpoint=url))
-        #     # self.logger.info(f"Attachment response!! -> {first_att.text}")
+        url_2 = "/attachments(84325d7f-e64d-ef11-98c4-6045bdaa646f)/attachmentContent"
+        try: 
+            # first_att = self.request_api("GET", self.get_endpoint(record, endpoint=url))
+            # self.logger.info(f"Attachment response!! -> {first_att.text}")
 
-        #     second_att = self.request_api("GET", self.get_endpoint(record, endpoint=url_2))
-        #     self.logger.info(f"Attachment response!! -> {second_att.text}")
-        # except:
-        #     self.logger.info(f"Failed {second_att.text}")
-        # raise Exception(f"Finisinh test job")
+            second_att = self.request_api("GET", self.get_endpoint(record, endpoint=url_2))
+            self.logger.info(f"Attachment response!! -> {second_att.text}")
+        except:
+            self.logger.info(f"Failed {second_att.text}")
+        raise Exception(f"Finisinh test job")
     
         self.logger.info(f"CREATING PAYLOAD")
         self.endpoint = self.get_endpoint(record)
