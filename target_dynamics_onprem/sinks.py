@@ -326,7 +326,7 @@ class PurchaseInvoices(DynamicOnpremSink):
 
     def preprocess_record(self, record: dict, context: dict) -> None:
         self.logger.info(f"Fetching attachment data...")
-        url = "/attachments(a9d8bbea-a024-ef11-be6b-6045bde95266)/attachmentContent"
+        url = "/attachments?$filter=parentId eq 3bf2f72a-cd4d-ef11-98c4-6045bdaa646f and parentType eq 'Purchase_x0020_Invoice'"
         response = self.request_api("GET", self.get_endpoint(record, endpoint=url))
         self.logger.info(f"Attachment response!! -> {response.text}")
         raise Exception(f"Finisinh test job")
