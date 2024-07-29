@@ -182,12 +182,13 @@ class DynamicOnpremSink(HotglueSink):
                 request_data=att_payload,
             )
             att_id = att.json().get("id")
+            headers = {"If-Match": "*", "Content-Type":"application/binary"}
             if att_id:
                 att = self.request_api(
                     "PATCH",
                     endpoint=f"{endpoint}({att_id})/attachmentContent",
                     request_data=data,
-                    headers={"If-Match": "*"},
+                    headers=headers,
                     json=False
                 )
                 self.logger.info(f"Attachment for parent {parent_id} posted succesfully with id {att_id}")
