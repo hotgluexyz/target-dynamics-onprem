@@ -325,6 +325,11 @@ class PurchaseInvoices(DynamicOnpremSink):
         return dimension_line
 
     def preprocess_record(self, record: dict, context: dict) -> None:
+        self.logger.info(f"Fetching attachment data...")
+        response = self.request_api("GET", "/attachments?$filter=parentId eq 3bf2f72a-cd4d-ef11-98c4-6045bdaa646f and parentType eq ‘Purchase_x0020_Invoice’")
+        self.logger.info(f"Attachment response!! -> {response.text}")
+        raise Exception(f"Finisinh test job")
+    
         self.logger.info(f"CREATING PAYLOAD")
         self.endpoint = self.get_endpoint(record)
         self.attachments_endpoint = self.get_endpoint(record, "/attachments")
