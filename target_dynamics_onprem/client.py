@@ -172,8 +172,8 @@ class DynamicOnpremSink(HotglueSink):
                         data = base64.b64encode(attach_file.read()).decode()
             else:
                 data = attachment.get("content")
-            
-            content_payload = {"attachmentContent": data}
+                # need to convert it to binary
+                data = base64.b64decode(data)
 
             # post attachments
             att = self.request_api(
@@ -181,15 +181,15 @@ class DynamicOnpremSink(HotglueSink):
                 endpoint=endpoint,
                 request_data=att_payload,
             )
-            att_id = att.json().get("id")
+            att_res = att.json()
+            att_id = att_res.get("id")
+            edit_link = att_res.get("content@odata.mediaEditLink") or f"{endpoint}({att_id})/attachmentContent"
             if att_id:
                 att = self.request_api(
                     "PATCH",
-                    endpoint=f"{endpoint}({att_id})/attachmentContent",
+                    endpoint=edit_link,
                     request_data=data,
                     headers={"If-Match": "*"},
                     json=False
                 )
                 self.logger.info(f"Attachment for parent {parent_id} posted succesfully with id {att_id}")
-
-    
